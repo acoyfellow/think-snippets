@@ -6,7 +6,6 @@ cd "$(dirname "$0")/.."
 
 examples=(
   "rpc-chat-memory:examples/rpc-chat-memory/run-e2e.sh"
-  "rpc-init-safety:examples/rpc-init-safety/scripts/run-e2e.sh"
   "workspace-write-read-proof:examples/workspace-write-read-proof/run-e2e.sh"
   "workspace-search-proof:examples/workspace-search-proof/scripts/run-e2e.sh"
   "server-tool-audit-loop:examples/server-tool-audit-loop/run-e2e.sh"

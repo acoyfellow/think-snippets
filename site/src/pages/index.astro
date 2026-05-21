@@ -3,7 +3,6 @@ import '../styles/global.css';
 
 const examples = [
   ['rpc-chat-memory','RPC chat memory','HTTP → Think.chat() streamed RPC, then a second request proves DO memory persisted.',['RPC','Durable Objects']],
-  ['rpc-init-safety','RPC initialization safety','The cold-start seam: getAgentByName() waits for onStart() before custom Think RPC.',['RPC','startup seam']],
   ['workspace-write-read-proof','Workspace write proof','A model calls write; a separate DO RPC reads real SQLite-backed workspace bytes.',['workspace','storage evidence']],
   ['workspace-search-proof','Workspace search proof','Seed six files; the durable tool log must show search/read before the hidden fact answer.',['workspace','tool audit']],
   ['server-tool-audit-loop','Server tool audit loop','Runtime-only tool output appears both in a SQLite audit row and the assistant answer.',['tools','provenance']],

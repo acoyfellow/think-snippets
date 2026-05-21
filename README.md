@@ -15,7 +15,6 @@ Every isolated example has its own Worker, Durable Object bindings, Alchemy depl
 | Example | Gap it fills | Live proof |
 |---|---|---|
 | [`rpc-chat-memory`](examples/rpc-chat-memory) | Headless HTTP → `Think.chat()` RPC | turn 2 recalls the unique fact from turn 1 |
-| [`rpc-init-safety`](examples/rpc-init-safety) | The cold DO RPC seam | `getAgentByName()` waits for Think startup before RPC |
 | [`workspace-write-read-proof`](examples/workspace-write-read-proof) | Prompt text is not storage proof | Think `write` tool creates bytes that direct Workspace RPC reads back |
 | [`workspace-search-proof`](examples/workspace-search-proof) | Search grounding, not answer luck | tool log records list/find/read before the hidden fact answer |
 | [`server-tool-audit-loop`](examples/server-tool-audit-loop) | Tool output provenance | durable audit row + response both contain runtime-only output |

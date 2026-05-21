@@ -1,3 +1,11 @@
+/**
+ * Isolated alchemy entrypoint for the `hook-order-receipt` example.
+ *
+ * It re-applies the same personal-account safety rail as the repo-level
+ * alchemy.run.ts (must be invoked through scripts/personal-env.sh) but
+ * deploys its own Worker name + DurableObject namespace so it never
+ * shares state with the shared `think-snippets` worker.
+ */
 import alchemy from 'alchemy';
 import { Ai, DurableObjectNamespace, Worker } from 'alchemy/cloudflare';
 
@@ -11,19 +19,17 @@ if (deployAccountId !== expectedPersonalAccountId) {
   throw new Error('Refusing Cloudflare operation: CLOUDFLARE_ACCOUNT_ID is not CLOUDFLARE_PERSONAL_ACCOUNT_ID.');
 }
 
-const app = await alchemy('think-snippets', { stage: STAGE });
-const worker = await Worker(`think-snippets-${STAGE}`, {
-  entrypoint: 'src/worker.ts',
+// Cloudflare *.workers.dev subdomains have a 63-char limit. Keep the
+// alchemy app + Worker names short so `<worker>.<account>.workers.dev`
+// fits, even when STAGE is non-trivial.
+const app = await alchemy('hook-rcpt', { stage: STAGE });
+const worker = await Worker(`hook-rcpt-${STAGE}`, {
+  entrypoint: 'examples/hook-order-receipt/worker.ts',
   compatibilityDate: '2026-05-21',
   compatibility: 'node',
-  adopt: true,
-  domains:
-    STAGE === 'personal'
-      ? [{ domainName: 'think.coey.dev', overrideExistingOrigin: true, adopt: true }]
-      : [],
   bindings: {
     AI: Ai(),
-    Assistant: DurableObjectNamespace('Assistant', { className: 'Assistant', sqlite: true }),
+    OrderedAssistant: DurableObjectNamespace('OrderedAssistant', { className: 'OrderedAssistant', sqlite: true }),
     EXPECTED_ACCOUNT_ID: expectedPersonalAccountId,
     DEPLOY_ACCOUNT_ID: deployAccountId,
   },

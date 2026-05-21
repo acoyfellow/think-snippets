@@ -1,0 +1,13 @@
+{
+  "name": "workspace-search-proof",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Isolated, destroyable Project Think workspace-search proof — seeds many files via DO RPC, forces Think to use list/find/grep/read tools, and verifies tool invocation via a durable evidence log.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "e2e": "bash scripts/run-e2e.sh",
+    "deploy:personal": "STAGE=personal bash scripts/personal-env.sh npx alchemy deploy --stage personal",
+    "destroy:personal": "STAGE=personal bash scripts/personal-env.sh npx alchemy destroy --stage personal"
+  }
+}

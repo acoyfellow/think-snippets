@@ -5,6 +5,7 @@
     "": {
       "name": "think-snippets",
       "dependencies": {
+        "@cloudflare/codemode": "0.3.7",
         "@cloudflare/shell": "0.3.6",
         "@cloudflare/think": "0.6.1",
         "agents": "0.12.4",

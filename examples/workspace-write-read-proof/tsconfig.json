@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["worker.ts", "alchemy.run.ts", "probe.ts"]
+}

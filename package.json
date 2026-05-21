@@ -6,12 +6,15 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "check": "bun run typecheck",
+    "check": "bun run typecheck && bun run check:buttons",
+    "check:buttons": "bun run scripts/check-example-deploy-buttons.ts",
     "e2e": "bash scripts/run-e2e.sh",
+    "e2e:examples": "bash scripts/run-all-examples.sh",
     "deploy:personal": "STAGE=personal bash scripts/personal-env.sh npx alchemy deploy --stage personal",
     "destroy:personal": "STAGE=personal bash scripts/personal-env.sh npx alchemy destroy --stage personal"
   },
   "dependencies": {
+    "@cloudflare/codemode": "0.3.7",
     "@cloudflare/shell": "0.3.6",
     "@cloudflare/think": "0.6.1",
     "agents": "0.12.4",

@@ -8,7 +8,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun run e2e
+      - run: bun run check
+      - run: bun run e2e:examples
         env:
           CLOUDFLARE_PERSONAL_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_PERSONAL_ACCOUNT_ID }}
           CLOUDFLARE_PERSONAL_API_TOKEN: ${{ secrets.CLOUDFLARE_PERSONAL_API_TOKEN }}

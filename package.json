@@ -1,0 +1,28 @@
+{
+  "name": "think-snippets",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Real, runnable Cloudflare Project Think snippets. Deploy a native Think Durable Object, prove its chat memory and durable programmatic submissions, then destroy it.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "check": "bun run typecheck",
+    "e2e": "bash scripts/run-e2e.sh",
+    "deploy:personal": "STAGE=personal bash scripts/personal-env.sh npx alchemy deploy --stage personal",
+    "destroy:personal": "STAGE=personal bash scripts/personal-env.sh npx alchemy destroy --stage personal"
+  },
+  "dependencies": {
+    "@cloudflare/shell": "0.3.6",
+    "@cloudflare/think": "0.6.1",
+    "agents": "0.12.4",
+    "ai": "6.0.175",
+    "workers-ai-provider": "3.1.14",
+    "zod": "4.1.12"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260521.1",
+    "@types/bun": "latest",
+    "alchemy": "0.93.7",
+    "typescript": "6.0.3"
+  }
+}

@@ -1,0 +1,14 @@
+name: personal-live-e2e
+on:
+  workflow_dispatch:
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run e2e
+        env:
+          CLOUDFLARE_PERSONAL_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_PERSONAL_ACCOUNT_ID }}
+          CLOUDFLARE_PERSONAL_API_TOKEN: ${{ secrets.CLOUDFLARE_PERSONAL_API_TOKEN }}

@@ -8,7 +8,7 @@ Every isolated example has its own Worker, Durable Object bindings, Alchemy depl
 
 - Source: <https://github.com/acoyfellow/think-snippets>
 - Public landing target: <https://think.coey.dev>
-- Current live root smoke Worker: <https://think-snippets-think-snippets-personal-personal.coy.workers.dev>
+- Public showcase: <https://think.coey.dev>
 
 ## The example set
 

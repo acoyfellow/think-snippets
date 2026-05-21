@@ -17,10 +17,7 @@ const worker = await Worker(`think-snippets-${STAGE}`, {
   compatibilityDate: '2026-05-21',
   compatibility: 'node',
   adopt: true,
-  domains:
-    STAGE === 'personal'
-      ? [{ domainName: 'think.coey.dev', overrideExistingOrigin: true, adopt: true }]
-      : [],
+
   bindings: {
     AI: Ai(),
     Assistant: DurableObjectNamespace('Assistant', { className: 'Assistant', sqlite: true }),

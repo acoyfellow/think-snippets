@@ -10,6 +10,8 @@
     "check:buttons": "bun run scripts/check-example-deploy-buttons.ts",
     "e2e": "bash scripts/run-e2e.sh",
     "e2e:examples": "bash scripts/run-all-examples.sh",
+    "site:build": "cd site && bun run build",
+    "site:deploy": "cd site && bun run deploy",
     "deploy:personal": "STAGE=personal bash scripts/personal-env.sh npx alchemy deploy --stage personal",
     "destroy:personal": "STAGE=personal bash scripts/personal-env.sh npx alchemy destroy --stage personal"
   },

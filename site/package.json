@@ -1,0 +1,20 @@
+{
+  "name": "think-snippets-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy": "astro build && STAGE=personal bash ../scripts/personal-env.sh npx alchemy deploy --stage personal",
+    "destroy": "STAGE=personal bash ../scripts/personal-env.sh npx alchemy destroy --stage personal"
+  },
+  "dependencies": {
+    "astro": "^5.18.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "alchemy": "0.93.7",
+    "typescript": "6.0.3"
+  }
+}

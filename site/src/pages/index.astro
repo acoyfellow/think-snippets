@@ -1,23 +1,27 @@
 ---
-import '../styles/global.css';
-
-const examples = [
-  ['rpc-chat-memory','RPC chat memory','HTTP → Think.chat() streamed RPC, then a second request proves DO memory persisted.',['RPC','Durable Objects']],
-  ['workspace-write-read-proof','Workspace write proof','A model calls write; a separate DO RPC reads real SQLite-backed workspace bytes.',['workspace','storage evidence']],
-  ['workspace-search-proof','Workspace search proof','Seed six files; the durable tool log must show search/read before the hidden fact answer.',['workspace','tool audit']],
-  ['server-tool-audit-loop','Server tool audit loop','Runtime-only tool output appears both in a SQLite audit row and the assistant answer.',['tools','provenance']],
-  ['tool-approval-headless','Headless approval gate','Denied, missing-ticket, approved, and replay branches prove server-enforced exactly-once behavior.',['tools','negative cases']],
-  ['hook-order-receipt','Hook order receipt','A durable receipt proves Think’s stable lifecycle partial order, not an anecdotal log.',['hooks','SQLite receipt']],
-  ['clientless-subagent-rpc','Clientless child agent RPC','A parent agent streams a child Think turn; child sessions persist and remain isolated.',['sub-agents','RPC']],
-  ['cross-agent-handoff-envelope','Cross-agent handoff envelope','Producer and consumer share a typed checksum envelope, not loose LLM prose.',['handoff','schema']],
-  ['scheduled-synthetic-turn','Scheduled synthetic turn','An immediate schedule alarm injects a synthetic user message and persists the answer.',['schedule','server driven']],
-  ['execute-tool-state-edit','Execute tool state edit','Sandboxed JavaScript edits workspace state; the parent Think DO reads it directly.',['execute','sandbox']],
-  ['concurrency-latest-vs-queue','Latest vs queue concurrency','Wire receipts show queue keeps all turns while latest supersedes the middle overlap.',['concurrency','websocket']],
-  ['multi-tab-broadcast-protocol','Multi-tab broadcast protocol','Two headless sockets attached to one chat both receive the same streamed request id.',['protocol','broadcast']],
-  ['stream-resume-contract','Stream resume contract','Disconnect, reconnect, replay chunks, then compare with the persisted assistant transcript.',['protocol','resume']],
+// V4 — Editorial proof. Base: Field Notes layout.
+// Spliced in:
+//   • V3 receipt block, recolored to fit the editorial palette
+//   • V1-style ambient corner motion (single restrained SVG attractor)
+// Constraint palette: white / black / grays + orange(s) + ONE blue.
+const contracts = [
+  ['rpc-chat-memory','Memory','Two requests, one Durable Object — fact remembered.','TWO REQUESTS → SAME DO → "OCTARINE"'],
+  ['workspace-write-read-proof','Evidence','Model writes; we read the bytes back.','MODEL WROTE BYTES · WE READ BYTES'],
+  ['workspace-search-proof','Retrieval','Search/read fires before the answer.','SEARCH FIRED · READ FIRED · ANSWER CITED'],
+  ['server-tool-audit-loop','Provenance','Runtime-only output, captured & served.','SQLITE ROW = ASSISTANT ANSWER'],
+  ['tool-approval-headless','Approval','Exactly-once, denied otherwise.','DENY → DENY → APPROVE → REPLAY = DENY'],
+  ['hook-order-receipt','Lifecycle','Stable partial order, durably proved.','BEFORE · STEP · TOOL · AFTER · RESPONSE'],
+  ['clientless-subagent-rpc','Sub-agent','Parent streams a child Think turn.','PARENT.STREAMS(CHILD.TURN)'],
+  ['cross-agent-handoff-envelope','Handoff','Typed checksum envelope between agents.','TYPED · CHECKSUMMED · TRANSFERRED'],
+  ['scheduled-synthetic-turn','Schedule','Alarm injects a turn, model replies durably.','ALARM → USER MSG → MODEL REPLY'],
+  ['execute-tool-state-edit','Sandbox','Sandbox JS mutates workspace state.','GUEST JS WROTE FILE · PARENT READ FILE'],
+  ['concurrency-latest-vs-queue','Concurrency','Queue keeps all; latest supersedes middle.','MIDDLE TURN: SUPERSEDED'],
+  ['multi-tab-broadcast-protocol','Broadcast','Two sockets, one stream.','TWO SOCKETS · ONE STREAM'],
+  ['stream-resume-contract','Resume','Disconnect, replay, agree with transcript.','DISCONNECT → REPLAY → AGREES'],
 ] as const;
 const repo = 'https://github.com/acoyfellow/think-snippets';
 const deploy = 'https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets';
+const receiptNo = Math.floor(Date.now() / 1000) % 100000;
 ---
 <html lang="en">
   <head>
@@ -25,54 +29,175 @@ const deploy = 'https://deploy.workers.cloudflare.com/?url=https://github.com/ac
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href="https://think.coey.dev/" />
-    <title>Think contracts that actually run</title>
-    <meta name="description" content="Fourteen small, live-proven Cloudflare Project Think contracts. Every example deploys to Workers, asserts real evidence, and destroys itself." />
+    <title>Think · Field Notes</title>
+    <meta name="description" content="Field notes of thirteen Cloudflare Project Think contracts that deploy to your account, prove the claim they make, and tear themselves down." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://think.coey.dev/" />
-    <meta property="og:title" content="Think contracts that actually run" />
-    <meta property="og:description" content="Not another assistant demo: 14 deployable Cloudflare Think contracts with real E2E evidence." />
+    <meta property="og:title" content="Think · Field Notes" />
+    <meta property="og:description" content="Thirteen Cloudflare Project Think contracts that survive a redeploy." />
     <meta property="og:image" content="https://think.coey.dev/og/index.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Think contracts that actually run. 14 deployable Cloudflare Project Think examples." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Think contracts that actually run" />
-    <meta name="twitter:description" content="Not another assistant demo: 14 deployable Cloudflare Think contracts with real E2E evidence." />
     <meta name="twitter:image" content="https://think.coey.dev/og/index.png" />
-    <meta name="twitter:image:alt" content="Think contracts that actually run. 14 deployable Cloudflare Project Think examples." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=Sohne:wght@400;500;700&family=JetBrains+Mono:wght@500;600&family=Departure+Mono&display=swap" rel="stylesheet" />
+    <style>
+      :root{--paper:#f5f3ef;--paper-2:#ecead4 ;--paper-3:#fffbf2;--ink:#0f0f0f;--ink-soft:#3b3b3b;--muted:#7d7d7d;--rule:#d4d2cd;--orange:#f25b1c;--orange-soft:#fbd7c2;--blue:#1c4cff}
+      *{box-sizing:border-box;margin:0;padding:0}
+      html,body{background:var(--paper);color:var(--ink);font-family:"Fraunces",ui-serif,Georgia,serif;font-feature-settings:"ss01","ss02";font-optical-sizing:auto}
+      a{color:inherit}
+      .mono{font-family:"Departure Mono","JetBrains Mono",ui-monospace,SFMono-Regular,monospace;letter-spacing:.04em;text-transform:uppercase;font-size:.74rem;color:var(--ink-soft)}
+      .grotesk{font-family:"Sohne",ui-sans-serif,system-ui,-apple-system,Helvetica,Arial,sans-serif;letter-spacing:-.01em}
+      header{padding:24px 32px;display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--ink)}
+      header .brand{font-size:1.5rem;font-weight:700;letter-spacing:-.04em}
+      header .brand b{color:var(--orange)}
+      header nav{display:flex;gap:24px;font-family:"Departure Mono","JetBrains Mono",monospace;text-transform:uppercase;font-size:.78rem;letter-spacing:.12em}
+      header nav a{text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px}
+      header nav a:hover{border-color:var(--orange);color:var(--orange)}
+      .masthead{padding:16px 32px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--ink);font-family:"Departure Mono","JetBrains Mono",monospace;text-transform:uppercase;font-size:.74rem;letter-spacing:.08em;color:var(--ink-soft);gap:24px;flex-wrap:wrap}
+      .masthead .live{display:inline-flex;align-items:center;gap:8px;color:var(--blue)}
+      .masthead .live::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 0 rgba(28,76,255,.4);animation:pulse 2.4s ease-in-out infinite}
+      main{max-width:1180px;margin:0 auto;padding:0 32px 80px}
+      .hero{padding:54px 0 32px;position:relative}
+      .hero .corner{position:absolute;top:24px;right:0;width:180px;height:180px;opacity:.85;pointer-events:none}
+      .hero .corner circle{transform-box:fill-box;transform-origin:center}
+      .hero .corner .ring{fill:none;stroke:#1d1d1d;stroke-width:.5;opacity:.7}
+      .hero .corner .dot{animation:breath 6s ease-in-out infinite}
+      .hero .corner .dot:nth-child(2){animation-delay:-1.2s}
+      .hero .corner .dot:nth-child(3){animation-delay:-2.4s}
+      .hero .corner .dot:nth-child(4){animation-delay:-3.6s}
+      .hero .corner .dot:nth-child(5){animation-delay:-4.8s}
+      .hero .corner .spine{stroke:var(--orange);stroke-width:.6;stroke-dasharray:3 4;animation:flux 14s linear infinite}
+      .label{display:inline-block;border:1px solid var(--ink);padding:4px 10px;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;font-family:"Departure Mono","JetBrains Mono",monospace;margin-bottom:18px;background:var(--paper-3)}
+      h1{font-size:clamp(3.6rem,9.5vw,8.6rem);line-height:.9;letter-spacing:-.055em;font-weight:500;font-style:italic;margin-bottom:28px;max-width:13ch;position:relative}
+      h1 .orange{color:var(--orange);font-style:normal}
+      h1 .ko{background:var(--ink);color:var(--paper);padding:0 .12em;font-style:normal}
+      .standfirst{font-size:clamp(1.18rem,1.9vw,1.5rem);line-height:1.45;color:var(--ink-soft);max-width:780px;font-weight:400}
+      .standfirst b{color:var(--ink);font-weight:600}
+      .byline{margin-top:30px;display:flex;align-items:center;gap:14px;font-family:"Sohne",ui-sans-serif,system-ui;font-size:.86rem;letter-spacing:.04em;color:var(--ink-soft)}
+      .byline strong{font-weight:700;color:var(--ink)}
+      .cta-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:28px}
+      .btn{font-family:"Sohne",ui-sans-serif,system-ui;font-weight:700;font-size:.94rem;text-transform:uppercase;letter-spacing:.12em;padding:14px 22px;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);text-decoration:none;transition:transform .12s ease,background .12s ease,color .12s ease,border-color .12s ease;display:inline-flex;align-items:center;gap:12px}
+      .btn::before{content:'';display:inline-block;width:8px;height:8px;background:var(--orange);border-radius:50%;box-shadow:0 0 0 0 rgba(242,91,28,.5);animation:pulse 2.1s ease-in-out infinite}
+      .btn:hover{transform:translate(-1px,-1px);background:var(--orange);border-color:var(--orange)}
+      .btn:hover::before{background:var(--paper);box-shadow:none}
+      .btn.alt{background:transparent;color:var(--ink)}
+      .btn.alt::before{background:var(--ink)}
+      .btn.alt:hover{background:transparent;color:var(--orange);border-color:var(--orange)}
+      .btn.alt:hover::before{background:var(--orange)}
+      .lockup{display:grid;grid-template-columns:1.4fr 1fr;gap:48px;align-items:end;margin-top:72px;padding-top:32px;border-top:6px double var(--ink)}
+      .pull{font-family:"Fraunces",serif;font-style:italic;font-size:clamp(1.4rem,2.2vw,1.95rem);line-height:1.3;color:var(--blue);border-left:3px solid var(--blue);padding-left:18px}
+      .meta{font-family:"Sohne",ui-sans-serif,system-ui;font-size:.92rem;color:var(--ink-soft);line-height:1.6}
+      .meta b{display:block;font-family:"Departure Mono","JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;font-size:.7rem;color:var(--ink);margin-bottom:6px}
+      .receipt{margin:72px auto 0;max-width:880px;background:var(--paper-3);color:var(--ink);border:1px solid var(--ink);border-radius:6px;padding:32px 32px 44px;position:relative;box-shadow:0 28px 70px rgba(0,0,0,.16);transform:rotate(-.6deg)}
+      .receipt::after{content:'';position:absolute;left:0;right:0;bottom:-18px;height:20px;background:linear-gradient(135deg,transparent 25%,var(--paper-3) 25% 75%,transparent 75%);background-size:20px 20px}
+      .receipt-top{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px dashed var(--ink);padding-bottom:14px;margin-bottom:18px;flex-wrap:wrap;gap:18px}
+      .receipt-top h2{font-family:"Fraunces",serif;font-style:italic;font-size:1.6rem;letter-spacing:-.02em;font-weight:500}
+      .receipt-top span{font-family:"Departure Mono","JetBrains Mono",monospace;letter-spacing:.16em;text-transform:uppercase;font-size:.78rem;color:var(--ink-soft)}
+      .receipt ol{list-style:none;font-family:"Departure Mono","JetBrains Mono",monospace;font-size:.92rem}
+      .receipt li{display:flex;justify-content:space-between;gap:18px;padding:10px 0;border-bottom:1px dashed rgba(15,15,15,.22);letter-spacing:.04em;flex-wrap:wrap}
+      .receipt li b{font-weight:700;color:var(--orange);text-transform:uppercase}
+      .receipt li i{font-style:normal;color:var(--ink-soft);text-align:right}
+      .receipt small{display:block;margin-top:20px;font-family:"Departure Mono","JetBrains Mono",monospace;font-size:.74rem;text-align:center;text-transform:uppercase;letter-spacing:.24em;color:var(--ink-soft)}
+      .ledger{margin-top:72px;border:1px solid var(--ink);background:#fff}
+      .ledger-row{display:grid;grid-template-columns:54px 1fr 240px 110px;gap:18px;align-items:baseline;padding:14px 22px;border-bottom:1px solid var(--rule);font-family:"Sohne",ui-sans-serif,system-ui;font-size:1rem;transition:background .12s ease}
+      .ledger-row:last-child{border-bottom:0}
+      .ledger-row:hover{background:#fdf2eb}
+      .ledger-row .num{font-family:"Departure Mono","JetBrains Mono",monospace;color:var(--orange);font-weight:700;letter-spacing:.1em}
+      .ledger-row h3{font-family:"Fraunces",serif;font-size:1.32rem;letter-spacing:-.02em;font-weight:500;font-style:italic}
+      .ledger-row p{color:var(--ink-soft);line-height:1.4;font-size:.96rem}
+      .ledger-row a{font-family:"Departure Mono","JetBrains Mono",monospace;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;justify-self:end;text-decoration:none;border-bottom:1px solid var(--ink);padding-bottom:2px}
+      .ledger-row a:hover{color:var(--orange);border-color:var(--orange)}
+      .cta{margin-top:60px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+      .cta-block{max-width:520px}
+      .cta-block h2{font-family:"Fraunces",serif;font-size:clamp(1.8rem,3vw,2.4rem);font-style:italic;letter-spacing:-.02em;line-height:1.04}
+      footer{margin-top:80px;padding:24px 32px;border-top:1px solid var(--ink);font-family:"Departure Mono","JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-size:.74rem;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
+      @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(242,91,28,.5)}50%{box-shadow:0 0 0 10px rgba(242,91,28,0)}}
+      @keyframes breath{0%,100%{transform:scale(.6);opacity:.4}50%{transform:scale(1.2);opacity:1}}
+      @keyframes flux{to{stroke-dashoffset:-220}}
+      @media (max-width:760px){.lockup{grid-template-columns:1fr;gap:24px}.ledger-row{grid-template-columns:36px 1fr;gap:8px}.ledger-row p,.ledger-row a{grid-column:1 / -1}.ledger-row a{justify-self:start}.hero .corner{display:none}}
+      @media (prefers-reduced-motion: reduce){*{animation:none!important}}
+    </style>
   </head>
   <body>
-    <main class="shell">
-      <nav class="nav">
-        <a class="brand" href="/">think.coey.dev</a>
-        <div class="links"><a href="#examples">examples</a><a href="#why">why</a><a href={repo}>GitHub</a><a href={deploy}>Deploy</a></div>
-      </nav>
+    <header>
+      <div class="brand">think<b>.</b></div>
+      <nav><a href={repo}>Source</a><a href={deploy}>Deploy</a></nav>
+    </header>
+    <div class="masthead">
+      <span>Vol. 01 · Issue 0xA</span>
+      <span>Field notes · @cloudflare/think</span>
+      <span class="live">13 contracts · live</span>
+    </div>
+    <main>
       <section class="hero">
-        <div>
-          <div class="eyebrow">Cloudflare Project Think · verified contracts</div>
-          <h1>Not another assistant demo.</h1>
-          <p class="lede">This is the sharp edge map for <code>@cloudflare/think</code>: RPC startup, tool provenance, workspace evidence, typed handoffs, concurrency, websocket broadcast, and stream replay. Each example is isolated, deployable, live-probed, and cleaned up.</p>
-          <div class="cta"><a class="button" href={repo}>Read the repo →</a><a class="button alt" href={deploy}>Deploy to Cloudflare</a></div>
+        <svg class="corner" viewBox="-100 -100 200 200" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <circle class="ring" r="78" />
+          <circle class="ring" r="55" />
+          <circle class="ring" r="32" />
+          <line class="spine" x1="0" y1="-100" x2="0" y2="100" />
+          <circle class="dot" cx="0" cy="-78" r="3" fill="#0f0f0f" />
+          <circle class="dot" cx="74" cy="-26" r="3" fill="#0f0f0f" />
+          <circle class="dot" cx="46" cy="63" r="3" fill="#0f0f0f" />
+          <circle class="dot" cx="-46" cy="63" r="3" fill="#0f0f0f" />
+          <circle class="dot" cx="-74" cy="-26" r="3" fill="#0f0f0f" />
+          <circle cx="0" cy="0" r="6" fill="#f25b1c" />
+        </svg>
+        <span class="label">Field notes № 1</span>
+        <h1>Things that <span class="orange">survive</span> a <span class="ko">redeploy.</span></h1>
+        <p class="standfirst"><b>Project Think</b> is the agent runtime. This is the field log: thirteen contracts that deploy to real Cloudflare Workers, write actual bytes, and tear themselves down. The part of an agent that either holds or doesn't.</p>
+        <div class="byline">
+          <span>By</span><strong>think.coey.dev</strong><span>·</span><span>Updated 2026.05</span>
         </div>
-        <aside class="proof"><span class="eyebrow">repo contract</span><strong>14</strong><p>non-overlapping examples selected after mapping official and public Think demos.</p><ul><li>one Worker per example</li><li>personal-CF guarded live E2E</li><li>probe output beats screenshots</li></ul></aside>
+        <div class="cta-row">
+          <a class="btn" href={deploy}>Deploy to Cloudflare</a>
+          <a class="btn alt" href={repo}>Open the repo</a>
+        </div>
       </section>
-      <section class="strip">
-        <div class="stat"><b>14</b><span>Deploy buttons</span></div><div class="stat"><b>DO</b><span>SQLite-backed evidence</span></div><div class="stat"><b>E2E</b><span>deploy → prove → destroy</span></div><div class="stat"><b>0</b><span>generic chat starters</span></div>
+      <section class="lockup">
+        <p class="pull">"Every entry is a claim with a probe. If the probe doesn't agree with the page, the entry leaves."</p>
+        <div class="meta">
+          <b>About this issue</b>
+          Each contract is isolated: its own Worker, its own Durable Object bindings, its own probe, its own teardown. We do not stage screenshots; we read durable state. Personal Cloudflare deploys only.
+        </div>
       </section>
-      <section id="why" class="section panels">
-        <div class="panel"><h2>Why this exists</h2><p class="lede">Cloudflare already ships a flagship assistant, a durable submission dashboard, and agent-tools demos. This site deliberately fills the gaps they leave: small falsifiable contracts, especially where a Builder's intuition fails.</p></div>
-        <div class="panel"><h2>Run the suite</h2><pre><code>git clone {repo}
-cd think-snippets
-bun install
-export CLOUDFLARE_PERSONAL_ACCOUNT_ID=...
-export CLOUDFLARE_PERSONAL_API_TOKEN=...
-bun run e2e:examples</code></pre></div>
+      <section class="receipt" aria-label="receipt">
+        <div class="receipt-top">
+          <h2>think.coey.dev / receipt #{receiptNo}</h2>
+          <span>13/13 · live</span>
+        </div>
+        <ol>{contracts.map(([slug,label,_,proof], i) => <li><span><b>{String(i+1).padStart(2,'0')}</b> · {label}</span><i>{proof}</i></li>)}</ol>
+        <small>**** end of transmission ****</small>
       </section>
-      <section id="examples" class="section">
-        <div class="eyebrow">the catalog</div><h2>Every card is a claim with a probe.</h2>
-        <div class="grid">{examples.map(([slug,title,copy,pills]) => <article class="card"><div class="pillrow">{pills.map((pill) => <span class="pill">{pill}</span>)}</div><h3>{title}</h3><p>{copy}</p><div class="cardlinks"><a href={`${repo}/tree/main/examples/${slug}`}>source →</a><a href={deploy}>deploy →</a></div></article>)}</div>
+      <section class="ledger" aria-label="ledger">
+        {contracts.map(([slug,title,blurb], i) => (
+          <div class="ledger-row">
+            <span class="num">{String(i+1).padStart(2,'0')}</span>
+            <div>
+              <h3>{title}</h3>
+              <p>{blurb}</p>
+            </div>
+            <p class="mono">{slug}</p>
+            <a href={`${repo}/tree/main/examples/${slug}`}>Read →</a>
+          </div>
+        ))}
       </section>
-      <footer class="footer">Built to make Cloudflare Think behavior inspectable. Source, probes, and deploy buttons live in <a href={repo}>acoyfellow/think-snippets</a>.</footer>
+      <section class="cta">
+        <div class="cta-block">
+          <span class="label">Subscribe to the proof</span>
+          <h2>Deploy the suite. Let it answer for itself.</h2>
+        </div>
+        <div class="cta-row">
+          <a class="btn" href={deploy}>Deploy to Cloudflare</a>
+          <a class="btn alt" href={repo}>Open the repo</a>
+        </div>
+      </section>
     </main>
+    <footer>
+      <span>© think.coey.dev</span>
+      <span>Set in Fraunces · Sohne · Departure Mono</span>
+    </footer>
   </body>
 </html>

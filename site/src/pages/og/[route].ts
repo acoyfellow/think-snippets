@@ -1,10 +1,17 @@
+// OG card for think.coey.dev — V4 editorial palette.
+// Cream paper background, ink-black serif italic title (Fraunces), grays,
+// orange accent rule, and ONE blue dot — exactly the constraint the page uses.
+// astro-og-canvas renders this as a static PNG at /og/index.png at build time.
+
 import { OGImageRoute } from 'astro-og-canvas';
 
 interface PageData { title: string; description: string }
 const pages: Record<string, PageData> = {
   index: {
-    title: 'Think contracts that actually run',
-    description: '14 deployable Cloudflare Project Think examples. Real probes. Real cleanup.',
+    // The hero phrasing on the site is "Things that survive a redeploy."
+    // OG echoes it so social preview, page, and tweet read as one piece.
+    title: 'Things that survive a redeploy.',
+    description: 'Field notes — thirteen Cloudflare Project Think contracts that deploy, prove, and tear themselves down.',
   },
 };
 
@@ -14,13 +21,34 @@ export const { getStaticPaths, GET } = await OGImageRoute({
   getImageOptions: (_path, page: PageData) => ({
     title: page.title,
     description: page.description,
-    bgGradient: [[23, 18, 13], [53, 40, 27]],
-    border: { color: [243, 128, 32], width: 14, side: 'inline-start' },
-    padding: 72,
+    // Cream paper, matches body background (#f5f3ef).
+    bgGradient: [
+      [245, 243, 239],
+      [236, 234, 224],
+    ],
+    // Orange-accent rule on the inline-start, the same brand bar the page
+    // uses everywhere we want to draw the eye to "live".
+    border: { color: [242, 91, 28], width: 14, side: 'inline-start' },
+    padding: 80,
     font: {
-      title: { color: [255, 250, 241], size: 78, weight: 'Bold', lineHeight: 1.08, families: ['JetBrains Mono'] },
-      description: { color: [226, 211, 190], size: 34, weight: 'Bold', lineHeight: 1.38, families: ['JetBrains Mono'] },
+      title: {
+        color: [15, 15, 15],
+        size: 84,
+        weight: 'Bold',
+        lineHeight: 1.0,
+        families: ['Fraunces'],
+      },
+      description: {
+        color: [59, 59, 59],
+        size: 30,
+        weight: 'Normal',
+        lineHeight: 1.36,
+        families: ['Fraunces'],
+      },
     },
-    fonts: ['./src/fonts/JetBrainsMono-Bold.ttf'],
+    fonts: [
+      './src/fonts/Fraunces-Italic-VF.ttf',
+      './src/fonts/Fraunces-VF.ttf',
+    ],
   }),
 });

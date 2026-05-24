@@ -1,7 +1,5 @@
 # rpc-chat-memory
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Isolated, self-contained example. A tiny Worker bridges native HTTP requests to
 `Think.chat()` over Durable Object RPC and the live probe proves that streamed
 RPC turns persist a session fact across independent requests.

@@ -1,7 +1,5 @@
 # server-tool-audit-loop
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Minimal proof that a Project Think Durable Object can:
 
 1. Expose a **custom server-side tool** the model can call (`revealCalibrationCode`).

@@ -20,7 +20,7 @@ const contracts = [
   ['stream-resume-contract','Resume','Disconnect, replay, agree with transcript.','DISCONNECT → REPLAY → AGREES'],
 ] as const;
 const repo = 'https://github.com/acoyfellow/think-snippets';
-const deploy = 'https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets';
+const runSuite = `${repo}#run-everything`;
 const receiptNo = Math.floor(Date.now() / 1000) % 100000;
 ---
 <html lang="en">
@@ -124,7 +124,7 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
   <body>
     <header>
       <div class="brand">think<b>.</b></div>
-      <nav><a href={repo}>Source</a><a href={deploy}>Deploy</a></nav>
+      <nav><a href={repo}>Source</a><a href={runSuite}>Run</a></nav>
     </header>
     <div class="masthead">
       <span>Vol. 01 · Issue 0xA</span>
@@ -152,7 +152,7 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
           <span>By</span><strong>think.coey.dev</strong><span>·</span><span>Updated 2026.05</span>
         </div>
         <div class="cta-row">
-          <a class="btn" href={deploy}>Deploy to Cloudflare</a>
+          <a class="btn" href={runSuite}>Run the suite</a>
           <a class="btn alt" href={repo}>Open the repo</a>
         </div>
       </section>
@@ -190,7 +190,7 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
           <h2>Deploy the suite. Let it answer for itself.</h2>
         </div>
         <div class="cta-row">
-          <a class="btn" href={deploy}>Deploy to Cloudflare</a>
+          <a class="btn" href={runSuite}>Run the suite</a>
           <a class="btn alt" href={repo}>Open the repo</a>
         </div>
       </section>

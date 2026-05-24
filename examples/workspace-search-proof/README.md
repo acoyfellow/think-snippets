@@ -1,7 +1,5 @@
 # workspace-search-proof
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Isolated, fully destroyable proof that Cloudflare [Project Think](https://developers.cloudflare.com/agents/api-reference/think/) actually invokes its workspace tools (`list` / `find` / `grep` / `read`) to answer a question — not just lucks into the right text.
 
 This example is self-contained: its own worker, its own `alchemy.run.ts`, its own personal-account guard, its own probe, its own teardown. **It does not modify any shared file in the repo** and deploys as a separate Alchemy app (`think-snippets-workspace-search`).

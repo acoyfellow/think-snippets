@@ -1,7 +1,5 @@
 # examples/workspace-write-read-proof
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Live proof that Project Think's built-in **workspace tools** really write to a durable DO-backed filesystem — not just into the model's response text.
 
 ## What is proved

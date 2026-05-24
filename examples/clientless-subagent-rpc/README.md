@@ -1,7 +1,5 @@
 # clientless-subagent-rpc
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Isolated, self-contained example. A parent `Agent` invokes a child `Think`
 sub-agent over **raw Durable Object RPC** — no React, no chat UI, no SSE, no
 `agentTool` wrapping. The live probe asserts the three things the documented

@@ -1,10 +1,10 @@
 # think-snippets
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Small, live-proven [Cloudflare Project Think](https://developers.cloudflare.com/agents/api-reference/think/) contracts. This repo intentionally does **not** compete with Cloudflare's full assistant, submissions dashboard, or agent-tools showcase. It collects the lower-level seams builders trip over: RPC initialization, durable filesystem evidence, hook ordering, cross-agent handoff, protocol broadcast/resume, and concurrency behavior.
 
-Every isolated example has its own Worker, Durable Object bindings, Alchemy deploy file, probe, cleanup trap, README, and **Deploy to Cloudflare** button. Local E2E scripts force `CLOUDFLARE_PERSONAL_*` credentials, deploy to real Workers, assert live evidence, and destroy their resources on exit.
+Every isolated example has its own Worker, Durable Object bindings, [Alchemy](https://alchemy.run) deploy file, probe, cleanup trap, and README. Local E2E scripts force `CLOUDFLARE_PERSONAL_*` credentials, deploy to real Workers via Alchemy, assert live evidence, and destroy their resources on exit.
+
+> **Deployment:** this repo deploys via Alchemy, not Wrangler. The Cloudflare **Deploy to Cloudflare** button uses `wrangler deploy` and is not compatible with this stack — see [Run everything](#run-everything) below for the supported flow.
 
 - Source: <https://github.com/acoyfellow/think-snippets>
 - Public landing target: <https://think.coey.dev>

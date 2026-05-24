@@ -1,7 +1,5 @@
 # scheduled-synthetic-turn
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Server-triggered Project Think turn: no client chat RPC, no real cron. A
 single HTTP request enqueues a near-immediate Agent `schedule()` row; when
 the Durable Object alarm fires, the DO injects a synthetic user message

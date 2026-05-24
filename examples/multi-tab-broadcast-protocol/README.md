@@ -1,7 +1,5 @@
 # multi-tab-broadcast-protocol
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Two headless WebSocket clients attach to one Project Think Durable Object using
 the [agents](https://www.npmjs.com/package/agents) protocol. A single
 `cf_agent_use_chat_request` from one client is fanned out as

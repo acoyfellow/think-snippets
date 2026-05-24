@@ -1,7 +1,5 @@
 # stream-resume-contract
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Live proof that the `@cloudflare/think` stream-resumption protocol survives a
 mid-turn websocket disconnect on a real Cloudflare Worker, using only the
 public `cf_agent_chat_*` wire protocol.

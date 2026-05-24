@@ -1,7 +1,5 @@
 # hook-order-receipt
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Proves that the `@cloudflare/think` lifecycle hooks fire in a **stable
 partial order** during a deterministic, tool-invoking, durable turn — and
 makes that order machine-verifiable by recording every hook invocation as

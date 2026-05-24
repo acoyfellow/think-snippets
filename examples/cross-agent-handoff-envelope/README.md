@@ -1,7 +1,5 @@
 # cross-agent-handoff-envelope
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Two Cloudflare Project Think agents (`Producer` and `Consumer`) cooperate by exchanging a **typed, deterministic, checksum-protected handoff envelope** through a separate durable store. The transfer channel is machine-readable: chat is used only as durable audit evidence, never to carry the runtime fact.
 
 This example is isolated. It does not share `src/`, `alchemy.run.ts`, or `scripts/` with the repo root. Its own worker, alchemy app, personal-account guard, probe, and E2E cleanup live here.

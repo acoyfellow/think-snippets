@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "check": "bun run typecheck && bun run check:buttons",
+    "check": "bun run typecheck && bun run check:no-deploy-buttons",
+    "check:no-deploy-buttons": "bun run scripts/check-example-deploy-buttons.ts",
     "check:buttons": "bun run scripts/check-example-deploy-buttons.ts",
     "e2e": "bash scripts/run-e2e.sh",
     "e2e:examples": "bash scripts/run-all-examples.sh",

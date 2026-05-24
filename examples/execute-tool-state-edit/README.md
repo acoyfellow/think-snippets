@@ -1,7 +1,5 @@
 # execute-tool-state-edit
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Isolated, self-contained example. Lives entirely under
 `examples/execute-tool-state-edit/`; does not import or modify any
 shared file (`../../src/worker.ts`, `../../alchemy.run.ts`,

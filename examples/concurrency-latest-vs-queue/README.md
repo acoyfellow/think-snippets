@@ -1,7 +1,5 @@
 # concurrency-latest-vs-queue
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 Two `Think` Durable Objects with identical configuration except their
 `messageConcurrency` mode:
 

@@ -1,7 +1,5 @@
 # examples/tool-approval-headless
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets)
-
 A live, headless proof of a **server-enforced approval flow for a Think-sensitive tool**. The sensitive tool only runs when a durable approval ticket says it can — and only **exactly once**. Every attempt is recorded in inspectable, durable DO SQLite tables.
 
 ## Caveat (read before believing the label)

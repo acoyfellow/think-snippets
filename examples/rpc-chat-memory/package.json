@@ -1,0 +1,22 @@
+{
+  "name": "rpc-chat-memory",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@cloudflare/think": "0.6.1",
+    "@cloudflare/shell": "0.3.6",
+    "@cloudflare/codemode": "0.3.7",
+    "agents": "0.12.4",
+    "ai": "6.0.175",
+    "workers-ai-provider": "3.1.14",
+    "zod": "4.1.12"
+  },
+  "devDependencies": {
+    "wrangler": "4.94.0",
+    "@cloudflare/workers-types": "4.20260521.1",
+    "typescript": "6.0.3"
+  }
+}

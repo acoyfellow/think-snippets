@@ -1,0 +1,26 @@
+{
+  // Deploy to Cloudflare button entrypoint.
+  // This file exists so the one-click button can spin up the example
+  // on the visitor's own Cloudflare account using wrangler deploy.
+  // The Alchemy file in this folder remains the source of truth for the
+  // local "deploy → prove → destroy" lifecycle (see ../../README.md).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rpc-chat-memory",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-05-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "ai": { "binding": "AI" },
+  "durable_objects": {
+    "bindings": [{ "name": "Memory", "class_name": "Memory" }]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Memory"] }
+  ],
+  "vars": {
+    // No personal-account attestation when deployed via the button. The
+    // local Alchemy path sets EXPECTED_ACCOUNT_ID / DEPLOY_ACCOUNT_ID.
+    "EXPECTED_ACCOUNT_ID": "button-deploy",
+    "DEPLOY_ACCOUNT_ID": "button-deploy"
+  }
+}

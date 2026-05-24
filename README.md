@@ -4,7 +4,11 @@ Small, live-proven [Cloudflare Project Think](https://developers.cloudflare.com/
 
 Every isolated example has its own Worker, Durable Object bindings, [Alchemy](https://alchemy.run) deploy file, probe, cleanup trap, and README. Local E2E scripts force `CLOUDFLARE_PERSONAL_*` credentials, deploy to real Workers via Alchemy, assert live evidence, and destroy their resources on exit.
 
-> **Deployment:** this repo deploys via Alchemy, not Wrangler. The Cloudflare **Deploy to Cloudflare** button uses `wrangler deploy` and is not compatible with this stack — see [Run everything](#run-everything) below for the supported flow.
+## One-click deploy
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets/tree/main/examples/rpc-chat-memory)
+
+One example — [`rpc-chat-memory`](examples/rpc-chat-memory) — ships a `wrangler.jsonc` so the **Deploy to Cloudflare** button can spin it up on your account in a click. The other 12 deploy via Alchemy under the personal-account guard and are not button-deployable; use [Run everything](#run-everything) for those.
 
 - Source: <https://github.com/acoyfellow/think-snippets>
 - Public landing target: <https://think.coey.dev>

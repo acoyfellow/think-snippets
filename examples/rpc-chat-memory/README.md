@@ -1,5 +1,9 @@
 # rpc-chat-memory
 
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets/tree/main/examples/rpc-chat-memory)
+
+> One-click deploy to **your** Cloudflare account. This is the only example in the repo with a Wrangler config; the other 12 deploy via Alchemy + `bun run e2e:examples` (see [root README](../../README.md)).
+
 Isolated, self-contained example. A tiny Worker bridges native HTTP requests to
 `Think.chat()` over Durable Object RPC and the live probe proves that streamed
 RPC turns persist a session fact across independent requests.

@@ -22,6 +22,7 @@ One example — [`rpc-chat-memory`](examples/rpc-chat-memory) — ships a `wrang
 | [`workspace-write-read-proof`](examples/workspace-write-read-proof) | Prompt text is not storage proof | Think `write` tool creates bytes that direct Workspace RPC reads back |
 | [`workspace-search-proof`](examples/workspace-search-proof) | Search grounding, not answer luck | tool log records list/find/read before the hidden fact answer |
 | [`server-tool-audit-loop`](examples/server-tool-audit-loop) | Tool output provenance | durable audit row + response both contain runtime-only output |
+| [`effect-hello`](examples/effect-hello) | Effect v4 inside a Think tool | one chat turn drives an Effect-backed tool; deterministic greeting reaches the assistant answer |
 | [`tool-approval-headless`](examples/tool-approval-headless) | Approval without a chat UI | denied/no-ticket/approved/replay branches prove exactly-once side effect behavior |
 | [`hook-order-receipt`](examples/hook-order-receipt) | Hook semantics people hand-wave | durable receipt proves the stable partial ordering of Think turn hooks |
 | [`clientless-subagent-rpc`](examples/clientless-subagent-rpc) | Raw child Think invocation, not agent-tools UI | parent streams child output; child sessions persist and stay isolated |

@@ -9,6 +9,7 @@ examples=(
   "workspace-write-read-proof:examples/workspace-write-read-proof/run-e2e.sh"
   "workspace-search-proof:examples/workspace-search-proof/scripts/run-e2e.sh"
   "server-tool-audit-loop:examples/server-tool-audit-loop/run-e2e.sh"
+  "effect-hello:examples/effect-hello/run-e2e.sh"
   "tool-approval-headless:examples/tool-approval-headless/scripts/run-e2e.sh"
   "hook-order-receipt:examples/hook-order-receipt/run-e2e.sh"
   "clientless-subagent-rpc:examples/clientless-subagent-rpc/run-e2e.sh"

@@ -18,9 +18,10 @@ const contracts = [
   ['concurrency-latest-vs-queue','Concurrency','Queue keeps all; latest supersedes middle.','MIDDLE TURN: SUPERSEDED'],
   ['multi-tab-broadcast-protocol','Broadcast','Two sockets, one stream.','TWO SOCKETS · ONE STREAM'],
   ['stream-resume-contract','Resume','Disconnect, replay, agree with transcript.','DISCONNECT → REPLAY → AGREES'],
-  ['cli-http-ground-truth','CLI ground truth (HTTP)','One tool shells out to your CLI over HTTP; its stdout is the only source of truth.','ANSWER = CLI STDOUT TOKEN · AUDITED'],
-  ['cli-sandbox-ground-truth','CLI ground truth (sandbox)','A deterministic CLI runs in a codemode sandbox; output is computed in-sandbox, not guessed.','CLI_OK:<token> · INPUT-DERIVED'],
+  ['cli-http-ground-truth','CLI ground truth (HTTP)','Agent runs a real cf CLI over HTTP; the live account is the only source of truth.','PROBE READS CF API · AGENT MUST AGREE'],
+  ['cli-sandbox-ground-truth','CLI ground truth (sandbox)','Same real cf CLI, run inside a codemode sandbox; token stays server-side.','SANDBOX RAN CF · STDOUT = LIVE ACCOUNT'],
 ] as const;
+const n = contracts.length;
 const repo = 'https://github.com/acoyfellow/think-snippets';
 const runSuite = `${repo}#run-everything`;
 const deployRpc = 'https://deploy.workers.cloudflare.com/?url=https://github.com/acoyfellow/think-snippets/tree/main/examples/rpc-chat-memory';
@@ -33,11 +34,11 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href="https://think.coey.dev/" />
     <title>Think · Field Notes</title>
-    <meta name="description" content="Field notes of thirteen Cloudflare Project Think contracts that deploy to your account, prove the claim they make, and tear themselves down." />
+    <meta name="description" content={`Field notes of ${n} Cloudflare Project Think contracts that deploy to your account, prove the claim they make, and tear themselves down.`} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://think.coey.dev/" />
     <meta property="og:title" content="Think · Field Notes" />
-    <meta property="og:description" content="Thirteen Cloudflare Project Think contracts that survive a redeploy." />
+    <meta property="og:description" content={`${n} Cloudflare Project Think contracts that survive a redeploy.`} />
     <meta property="og:image" content="https://think.coey.dev/og/index.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -120,7 +121,48 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
       @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(242,91,28,.5)}50%{box-shadow:0 0 0 10px rgba(242,91,28,0)}}
       @keyframes breath{0%,100%{transform:scale(.6);opacity:.4}50%{transform:scale(1.2);opacity:1}}
       @keyframes flux{to{stroke-dashoffset:-220}}
-      @media (max-width:760px){.lockup{grid-template-columns:1fr;gap:24px}.ledger-row{grid-template-columns:36px 1fr;gap:8px}.ledger-row p,.ledger-row a{grid-column:1 / -1}.ledger-row a{justify-self:start}.hero .corner{display:none}}
+      /* keep everything inside the viewport on every width */
+      html,body{overflow-x:hidden}
+      img,svg{max-width:100%}
+
+      /* tablet / small laptop */
+      @media (max-width:1000px){
+        main{padding:0 24px 64px}
+        .ledger-row{grid-template-columns:46px 1fr 150px;gap:14px}
+        .ledger-row a{grid-column:1 / -1;justify-self:start;margin-top:2px}
+        .lockup{gap:32px}
+        .hero{padding:44px 0 28px}
+      }
+
+      /* phone */
+      @media (max-width:760px){
+        header,.masthead,footer{padding-left:20px;padding-right:20px}
+        header nav{gap:16px}
+        main{padding:0 20px 56px}
+        .hero{padding:32px 0 24px}
+        h1{font-size:clamp(2.6rem,13vw,4.4rem);margin-bottom:22px;max-width:100%}
+        .lockup{grid-template-columns:1fr;gap:24px;margin-top:48px}
+        .receipt{margin-top:48px;padding:24px 18px 36px;transform:none;box-shadow:0 14px 40px rgba(0,0,0,.14)}
+        .receipt-top h2{font-size:1.2rem;word-break:break-word}
+        .ledger{margin-top:48px}
+        .ledger-row{grid-template-columns:32px 1fr;gap:6px 10px;padding:14px 16px}
+        .ledger-row p,.ledger-row p.mono,.ledger-row a{grid-column:1 / -1}
+        .ledger-row p.mono{color:var(--muted);margin-top:2px}
+        .cta{margin-top:48px}
+        .cta-row{width:100%}
+        .btn{flex:1 1 auto;justify-content:center}
+        .hero .corner{display:none}
+      }
+
+      /* small phone */
+      @media (max-width:430px){
+        header{flex-wrap:wrap;gap:8px}
+        .masthead{font-size:.66rem;gap:10px}
+        h1{font-size:clamp(2.1rem,12vw,3.2rem)}
+        .standfirst{font-size:1.05rem}
+        .receipt li{font-size:.8rem}
+        .btn{font-size:.82rem;padding:13px 14px;letter-spacing:.08em}
+      }
       @media (prefers-reduced-motion: reduce){*{animation:none!important}}
     </style>
   </head>
@@ -132,7 +174,7 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
     <div class="masthead">
       <span>Vol. 01 · Issue 0xA</span>
       <span>Field notes · @cloudflare/think</span>
-      <span class="live">13 contracts · live</span>
+      <span class="live">{n} contracts · live</span>
     </div>
     <main>
       <section class="hero">
@@ -150,7 +192,7 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
         </svg>
         <span class="label">Field notes № 1</span>
         <h1>Things that <span class="orange">survive</span> a <span class="ko">redeploy.</span></h1>
-        <p class="standfirst"><b>Project Think</b> is the agent runtime. This is the field log: thirteen contracts that deploy to real Cloudflare Workers, write actual bytes, and tear themselves down. The part of an agent that either holds or doesn't.</p>
+        <p class="standfirst"><b>Project Think</b> is the agent runtime. This is the field log: {n} contracts that deploy to real Cloudflare Workers, write actual bytes, and tear themselves down. The part of an agent that either holds or doesn't.</p>
         <div class="byline">
           <span>By</span><strong>think.coey.dev</strong><span>·</span><span>Updated 2026.05</span>
         </div>
@@ -169,7 +211,7 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
       <section class="receipt" aria-label="receipt">
         <div class="receipt-top">
           <h2>think.coey.dev / receipt #{receiptNo}</h2>
-          <span>13/13 · live</span>
+          <span>{n}/{n} · live</span>
         </div>
         <ol>{contracts.map(([slug,label,_,proof], i) => <li><span><b>{String(i+1).padStart(2,'0')}</b> · {label}</span><i>{proof}</i></li>)}</ol>
         <small>**** end of transmission ****</small>

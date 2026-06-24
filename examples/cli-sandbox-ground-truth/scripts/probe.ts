@@ -1,18 +1,22 @@
 // Live proof for cli-sandbox-ground-truth.
 //
-// 1. /health attests personal-account deploy + LOADER bound.
-// 2. POST /cli/:session { arg } runs the user's CLI INSIDE the codemode
-//    sandbox and returns its stdout. The stdout embeds a deterministic
-//    transform of `arg` that only resolves by executing the CLI.
-// 3. The probe recomputes the same transform locally and asserts the sandbox
-//    stdout matches (proving real execution), and that a wrong guess does NOT
-//    match (proving the value is not free-form / hallucinated).
+// Ground truth is the REAL Cloudflare account. The probe:
+//   1. reads the true account name directly from the Cloudflare API,
+//   2. has the agent run the cf CLI INSIDE the codemode sandbox via
+//      `tools.cf({ command: "account" })` and return its stdout,
+//   3. asserts the sandbox stdout carries the real account name,
+//   4. negative control: a wrong name is NOT present.
+// The sandbox genuinely executes and the truth is live, so a fabricated
+// answer cannot pass.
 export {};
 
 const base = process.env.WORKER_URL;
 if (!base) throw new Error('WORKER_URL is required');
-const expected = process.env.CLOUDFLARE_PERSONAL_ACCOUNT_ID;
-if (!expected) throw new Error('CLOUDFLARE_PERSONAL_ACCOUNT_ID is required');
+const accountId = process.env.CLOUDFLARE_PERSONAL_ACCOUNT_ID;
+const apiToken = process.env.CLOUDFLARE_PERSONAL_API_TOKEN;
+if (!accountId || !apiToken) {
+  throw new Error('CLOUDFLARE_PERSONAL_ACCOUNT_ID and CLOUDFLARE_PERSONAL_API_TOKEN are required');
+}
 
 async function body<T>(path: string, init?: RequestInit): Promise<T> {
   const attempts = 8;
@@ -33,14 +37,6 @@ async function body<T>(path: string, init?: RequestInit): Promise<T> {
   throw new Error(`${path} HTTP ${lastStatus}: ${last}`);
 }
 
-// Mirror of the in-sandbox CLI transform — used only to verify the sandbox
-// actually computed it (never sent to the agent).
-function expectedStdout(arg: string): string {
-  let h = 5381;
-  for (let i = 0; i < arg.length; i++) h = ((h << 5) + h + arg.charCodeAt(i)) >>> 0;
-  return `RESULT ${arg} => ${h.toString(16)}`;
-}
-
 const health = await body<{ ok: boolean; deployAccountMatchesExpected: boolean; example: string; loaderBound: boolean }>(
   '/health',
 );
@@ -50,24 +46,34 @@ if (!health.ok || !health.deployAccountMatchesExpected || health.example !== 'cl
 if (!health.loaderBound) throw new Error('LOADER binding missing — sandbox cannot run');
 console.log('✓ /health attests personal-account deploy + LOADER bound');
 
-const arg = `task-${Date.now()}`;
-const run = await body<{ stdout: string }>(`/cli/sbx-${Date.now()}`, {
+// Independent ground truth from the Cloudflare API.
+const cfRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}`, {
+  headers: { authorization: `Bearer ${apiToken}` },
+});
+const cfJson = (await cfRes.json()) as { success?: boolean; result?: { name?: string } };
+const trueName = cfJson.result?.name;
+if (!cfJson.success || !trueName) {
+  throw new Error(`could not read true account name from Cloudflare API: ${JSON.stringify(cfJson)}`);
+}
+console.log(`✓ independent Cloudflare API truth: account name = ${JSON.stringify(trueName)}`);
+
+const run = await body<{ stdout: string }>(`/cf/sbx-${Date.now()}`, {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
-  body: JSON.stringify({ arg }),
+  body: JSON.stringify({ command: 'account' }),
 });
-console.log(`  sandbox CLI stdout: ${run.stdout}`);
+console.log(`  sandbox cf stdout: ${run.stdout.replace(/\n/g, ' | ')}`);
 
-const want = expectedStdout(arg);
-if (run.stdout !== want) {
-  throw new Error(`sandbox CLI stdout did not match the executed transform.\n  got:  ${run.stdout}\n  want: ${want}`);
+if (!run.stdout.includes(trueName)) {
+  throw new Error(
+    `sandbox cf stdout did not contain the live account name ${JSON.stringify(trueName)}: ${run.stdout}`,
+  );
 }
-console.log('✓ sandbox CLI stdout equals the executed deterministic transform (ran for real)');
+console.log('✓ sandbox-run cf CLI returned the live account name (real execution, real account)');
 
-// Negative control: a wrong arg must produce different stdout.
-const wrong = expectedStdout(`${arg}-WRONG`);
-if (run.stdout === wrong) {
-  throw new Error('stdout matched a wrong-arg transform — value is not input-bound');
+const wrong = `${trueName}-NOT-THE-REAL-NAME`;
+if (run.stdout.includes(wrong)) {
+  throw new Error('stdout contained a fabricated wrong name — output is not account-bound');
 }
-console.log('✓ a wrong guess would not match — the CLI output is the ground truth');
-console.log('✅ cli-sandbox-ground-truth E2E passed: sandbox CLI stdout was the agent ground truth');
+console.log('✓ a fabricated name would not appear — the cf CLI output is the ground truth');
+console.log('✅ cli-sandbox-ground-truth E2E passed: a real cf CLI in-sandbox was the agent ground truth');

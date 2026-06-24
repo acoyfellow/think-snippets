@@ -11,7 +11,7 @@ const pages: Record<string, PageData> = {
     // The hero phrasing on the site is "Things that survive a redeploy."
     // OG echoes it so social preview, page, and tweet read as one piece.
     title: 'Things that survive a redeploy.',
-    description: 'Field notes — thirteen Cloudflare Project Think contracts that deploy, prove, and tear themselves down.',
+    description: 'Field notes — fifteen Cloudflare Project Think contracts that deploy, prove, and tear themselves down.',
   },
 };
 

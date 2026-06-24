@@ -2,12 +2,18 @@
   "name": "think-snippets",
   "version": "0.0.1",
   "private": true,
-  "description": "Real, runnable Cloudflare Project Think snippets. Deploy a native Think Durable Object, prove its chat memory and durable programmatic submissions, then destroy it.",
+  "description": "Live-proven Cloudflare Project Think contracts: each example deploys to a real Worker, proves the claim it makes against live state, and tears itself down.",
+  "license": "MIT",
+  "author": "Jordan Coeyman",
+  "homepage": "https://think.coey.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acoyfellow/think-snippets.git"
+  },
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "check": "bun run typecheck && bun run check:no-deploy-buttons",
-    "check:no-deploy-buttons": "bun run scripts/check-example-deploy-buttons.ts",
+    "check": "bun run typecheck && bun run check:buttons",
     "check:buttons": "bun run scripts/check-example-deploy-buttons.ts",
     "e2e": "bash scripts/run-e2e.sh",
     "e2e:examples": "bash scripts/run-all-examples.sh",

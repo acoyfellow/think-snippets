@@ -32,8 +32,8 @@ One example — [`rpc-chat-memory`](examples/rpc-chat-memory) — ships a `wrang
 | [`concurrency-latest-vs-queue`](examples/concurrency-latest-vs-queue) | `messageConcurrency` semantics | WebSocket receipts show queue keeps all turns while latest supersedes the middle turn |
 | [`multi-tab-broadcast-protocol`](examples/multi-tab-broadcast-protocol) | Broadcast protocol without building a UI | two websocket clients receive the same streamed request id |
 | [`stream-resume-contract`](examples/stream-resume-contract) | Resume/replay at the wire level | disconnect, reconnect, resume/replay chunks, persisted assistant transcript agrees |
-| [`cli-http-ground-truth`](examples/cli-http-ground-truth) | Agent uses an external CLI (over HTTP) as ground truth | answer carries the CLI's runtime-only stdout token; durable audit row proves the tool shelled out |
-| [`cli-sandbox-ground-truth`](examples/cli-sandbox-ground-truth) | Agent uses a sandbox CLI as ground truth | a deterministic CLI runs in a codemode sandbox; output is genuinely computed in-sandbox from the input |
+| [`cli-http-ground-truth`](examples/cli-http-ground-truth) | Agent uses a real `cf` CLI (over HTTP) as ground truth | probe reads the true account name straight from the Cloudflare API; the agent must report that live value, and a durable audit row proves `run_cf` shelled out |
+| [`cli-sandbox-ground-truth`](examples/cli-sandbox-ground-truth) | Agent runs a real `cf` CLI inside a codemode sandbox | the sandbox calls the live Cloudflare API (token stays server-side); probe asserts the sandbox stdout carries the real account name, with a negative control |
 
 Two early repo-root smoke surfaces remain in [`src/worker.ts`](src/worker.ts): native chat RPC and durable `submitMessages()` status polling. The richer examples above are the maintainable contract library.
 

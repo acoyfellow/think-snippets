@@ -8,10 +8,9 @@ import { OGImageRoute } from 'astro-og-canvas';
 interface PageData { title: string; description: string }
 const pages: Record<string, PageData> = {
   index: {
-    // The hero phrasing on the site is "Things that survive a redeploy."
-    // OG echoes it so social preview, page, and tweet read as one piece.
-    title: 'Things that survive a redeploy.',
-    description: 'Field notes — fifteen Cloudflare Project Think contracts that deploy, prove, and tear themselves down.',
+    // Echoes the site hero so social preview, page, and tweet read as one piece.
+    title: 'Small Think agents, each with a live test.',
+    description: 'A collection of Cloudflare Project Think examples. Each deploys to a real Worker, proves what it claims, and tears itself down.',
   },
 };
 

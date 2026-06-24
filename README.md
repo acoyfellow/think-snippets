@@ -1,6 +1,8 @@
+![Small Think agents, each with a live test](.github/assets/banner.png)
+
 # think-snippets
 
-Small, live-proven [Cloudflare Project Think](https://developers.cloudflare.com/agents/api-reference/think/) contracts. This repo intentionally does **not** compete with Cloudflare's full assistant, submissions dashboard, or agent-tools showcase. It collects the lower-level seams builders trip over: RPC initialization, durable filesystem evidence, hook ordering, cross-agent handoff, protocol broadcast/resume, and concurrency behavior.
+Small, live-proven [Cloudflare Project Think](https://developers.cloudflare.com/agents/api-reference/think/) examples. This repo intentionally does **not** compete with Cloudflare's full assistant, submissions dashboard, or agent-tools showcase. It collects the lower-level seams builders trip over: RPC initialization, durable filesystem evidence, hook ordering, cross-agent handoff, protocol broadcast/resume, and concurrency behavior.
 
 Every isolated example has its own Worker, Durable Object bindings, [Alchemy](https://alchemy.run) deploy file, probe, cleanup trap, and README. Local E2E scripts force `CLOUDFLARE_PERSONAL_*` credentials, deploy to real Workers via Alchemy, assert live evidence, and destroy their resources on exit.
 

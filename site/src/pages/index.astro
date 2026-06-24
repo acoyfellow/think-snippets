@@ -33,12 +33,12 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href="https://think.coey.dev/" />
-    <title>Think · Field Notes</title>
-    <meta name="description" content={`Field notes of ${n} Cloudflare Project Think contracts that deploy to your account, prove the claim they make, and tear themselves down.`} />
+    <title>Think agents, each with a live test</title>
+    <meta name="description" content={`${n} small Cloudflare Project Think agents. Each one deploys to a real Worker, runs a live test that proves what it claims, and tears itself down.`} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://think.coey.dev/" />
-    <meta property="og:title" content="Think · Field Notes" />
-    <meta property="og:description" content={`${n} Cloudflare Project Think contracts that survive a redeploy.`} />
+    <meta property="og:title" content="Small Think agents, each with a live test" />
+    <meta property="og:description" content={`${n} small Cloudflare Project Think agents, each with a live test.`} />
     <meta property="og:image" content="https://think.coey.dev/og/index.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -172,9 +172,9 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
       <nav><a href={repo}>Source</a><a href={deployRpc}>Deploy</a></nav>
     </header>
     <div class="masthead">
-      <span>Vol. 01 · Issue 0xA</span>
-      <span>Field notes · @cloudflare/think</span>
-      <span class="live">{n} contracts · live</span>
+      <span>@cloudflare/think</span>
+      <span>github.com/acoyfellow/think-snippets</span>
+      <span class="live">{n} examples · live</span>
     </div>
     <main>
       <section class="hero">
@@ -190,11 +190,11 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
           <circle class="dot" cx="-74" cy="-26" r="3" fill="#0f0f0f" />
           <circle cx="0" cy="0" r="6" fill="#f25b1c" />
         </svg>
-        <span class="label">Field notes № 1</span>
-        <h1>Things that <span class="orange">survive</span> a <span class="ko">redeploy.</span></h1>
-        <p class="standfirst"><b>Project Think</b> is the agent runtime. This is the field log: {n} contracts that deploy to real Cloudflare Workers, write actual bytes, and tear themselves down. The part of an agent that either holds or doesn't.</p>
+        <span class="label">{n} examples</span>
+        <h1>Small Think agents, each with a <span class="orange">live</span> <span class="ko">test.</span></h1>
+        <p class="standfirst"><b>Project Think</b> is Cloudflare's agent runtime. This is a collection of {n} small examples. Each one deploys to a real Worker, runs a test that proves what it claims, and tears itself down afterward.</p>
         <div class="byline">
-          <span>By</span><strong>think.coey.dev</strong><span>·</span><span>Updated 2026.05</span>
+          <span>By</span><strong>think.coey.dev</strong><span>·</span><span>Updated 2026.06</span>
         </div>
         <div class="cta-row">
           <a class="btn" href={deployRpc}>Deploy rpc-chat-memory</a>
@@ -202,7 +202,7 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
         </div>
       </section>
       <section class="lockup">
-        <p class="pull">"Every entry is a claim with a probe. If the probe doesn't agree with the page, the entry leaves."</p>
+        <p class="pull">Each example makes one claim and ships a test for it. If the test doesn't pass live, it doesn't go in.</p>
         <div class="meta">
           <b>About this issue</b>
           Each contract is isolated: its own Worker, its own Durable Object bindings, its own probe, its own teardown. We do not stage screenshots; we read durable state. Personal Cloudflare deploys only.
@@ -231,8 +231,8 @@ const receiptNo = Math.floor(Date.now() / 1000) % 100000;
       </section>
       <section class="cta">
         <div class="cta-block">
-          <span class="label">Subscribe to the proof</span>
-          <h2>Deploy the suite. Let it answer for itself.</h2>
+          <span class="label">Try it</span>
+          <h2>Deploy one, or run the whole set against your own account.</h2>
         </div>
         <div class="cta-row">
           <a class="btn" href={deployRpc}>Deploy rpc-chat-memory</a>

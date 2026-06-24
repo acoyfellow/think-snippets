@@ -25,6 +25,7 @@ interface UIMessageChunk {
 }
 
 interface StreamCallback {
+  onStart: (event: unknown) => void;
   onEvent: (json: string) => void;
   onDone?: () => void;
   onError?: (message: string) => void;
@@ -183,6 +184,7 @@ async function chat(request: Request, env: Env, sessionId: string) {
   let answer = '';
   let error: string | undefined;
   await stub.chat(message, {
+    onStart() {},
     onEvent(raw) {
       try {
         const chunk = JSON.parse(raw) as UIMessageChunk;

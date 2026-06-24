@@ -20,10 +20,24 @@ const expected = process.env.CLOUDFLARE_PERSONAL_ACCOUNT_ID;
 if (!expected) throw new Error('CLOUDFLARE_PERSONAL_ACCOUNT_ID is required');
 
 async function body<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${base}${path}`, init);
-  const text = await response.text();
-  if (!response.ok) throw new Error(`${path} HTTP ${response.status}: ${text}`);
-  return JSON.parse(text) as T;
+  const attempts = 8; // run-unique/idempotent POSTs may retry the fresh-route flap
+  let last = '';
+  let lastStatus = 0;
+  for (let i = 0; i < attempts; i++) {
+    const response = await fetch(`${base}${path}`, init);
+    lastStatus = response.status;
+    last = await response.text();
+    if (response.ok) return JSON.parse(last) as T;
+    const transient =
+      (response.status === 404 && last.includes('There is nothing here yet')) ||
+      (response.status === 500 && last.includes('Worker threw exception')) ||
+      // Fresh workers.dev routes can also briefly emit bare `error code: 10xx`
+      // (1042/1016/1101) plaintext before the route fully propagates.
+      (!response.ok && /error code: 10\d\d/.test(last));
+    if (!transient) break;
+    await Bun.sleep(1500);
+  }
+  throw new Error(`${path} HTTP ${lastStatus}: ${last}`);
 }
 
 const health = await body<{
@@ -44,11 +58,12 @@ const marker = `snippet-${crypto.randomUUID()}`;
 const path = `/sandbox/${marker}.txt`;
 
 // Guest code runs inside DynamicWorkerExecutor. `state.*` is provided by
-// createWorkspaceStateBackend(this.workspace). The block returned from
-// the IIFE becomes `CodeOutput.result`.
+// createWorkspaceStateBackend(this.workspace). codemode >=0.4 takes a single
+// object argument per call: state.writeFile({ path, content }). The block
+// returned from the IIFE becomes `CodeOutput.result`.
 const code = `
-  await state.writeFile(${JSON.stringify(path)}, ${JSON.stringify(marker)});
-  const readBack = await state.readFile(${JSON.stringify(path)});
+  await state.writeFile({ path: ${JSON.stringify(path)}, content: ${JSON.stringify(marker)} });
+  const readBack = await state.readFile({ path: ${JSON.stringify(path)} });
   let networkError = null;
   try {
     await fetch("https://example.com");

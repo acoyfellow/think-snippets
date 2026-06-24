@@ -18,6 +18,8 @@ const contracts = [
   ['concurrency-latest-vs-queue','Concurrency','Queue keeps all; latest supersedes middle.','MIDDLE TURN: SUPERSEDED'],
   ['multi-tab-broadcast-protocol','Broadcast','Two sockets, one stream.','TWO SOCKETS · ONE STREAM'],
   ['stream-resume-contract','Resume','Disconnect, replay, agree with transcript.','DISCONNECT → REPLAY → AGREES'],
+  ['cli-http-ground-truth','CLI ground truth (HTTP)','One tool shells out to your CLI over HTTP; its stdout is the only source of truth.','ANSWER = CLI STDOUT TOKEN · AUDITED'],
+  ['cli-sandbox-ground-truth','CLI ground truth (sandbox)','A deterministic CLI runs in a codemode sandbox; output is computed in-sandbox, not guessed.','CLI_OK:<token> · INPUT-DERIVED'],
 ] as const;
 const repo = 'https://github.com/acoyfellow/think-snippets';
 const runSuite = `${repo}#run-everything`;

@@ -27,6 +27,12 @@ import { getAgentByName } from 'agents';
 import { createWorkersAI } from 'workers-ai-provider';
 import type { Tool, ToolSet } from 'ai';
 
+// codemode >=0.4 runs sandboxed code in a dedicated CodemodeRuntime Durable
+// Object. It must be exported from the worker entry and bound as a DO
+// namespace (see alchemy.run.ts / wrangler). Without this the execute tool
+// throws `Incorrect type for the 'class' field on 'StartupOptions'`.
+export { CodemodeRuntime } from '@cloudflare/codemode';
+
 export interface Env {
   AI: Ai;
   Assistant: DurableObjectNamespace<Assistant>;
@@ -72,12 +78,14 @@ export class Assistant extends Think<Env> {
   }
 
   private executeTool(): ExecuteTool {
-    return createExecuteTool({
+    // The one-liner form: codemode derives its runtime facet, state, and
+    // executor from the agent (this.ctx, this.workspace, this.env.LOADER).
+    // Passing an explicit options bag with a manual loader produced a bad
+    // startup class under codemode 0.4.x; `this` + overrides is the
+    // supported path.
+    return createExecuteTool(this, {
       tools: {},
       state: createWorkspaceStateBackend(this.workspace),
-      loader: this.env.LOADER,
-      // Default `globalOutbound: null` keeps fetch()/connect() blocked
-      // inside the sandbox. The probe asserts this.
     }) as ExecuteTool;
   }
 

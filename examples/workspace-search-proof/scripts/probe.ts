@@ -29,13 +29,18 @@ interface ToolLogEntry {
 async function body<T>(path: string, init?: RequestInit): Promise<T> {
   let last = '';
   let lastStatus = 0;
-  const attempts = init?.method && init.method !== 'GET' ? 1 : 6;
-  for (let attempt = 0; attempt < attempts; attempt++) {
+  // Seeding (/seed) is idempotent here, so even POSTs may retry the transient
+  // fresh-route flap. Genuine errors (non-404/1101 HTML) break immediately.
+  for (let attempt = 0; attempt < 8; attempt++) {
     const response = await fetch(`${base}${path}`, init);
     lastStatus = response.status;
     last = await response.text();
     if (response.ok) return JSON.parse(last) as T;
-    if (response.status !== 404 || !last.includes('There is nothing here yet')) break;
+    const transient =
+      (response.status === 404 && last.includes('There is nothing here yet')) ||
+      (response.status === 500 && last.includes('Worker threw exception')) ||
+      (!response.ok && /error code: 10\d\d/.test(last));
+    if (!transient) break;
     await Bun.sleep(1500);
   }
   throw new Error(`${path} HTTP ${lastStatus}: ${last}`);

@@ -17,19 +17,19 @@
     "destroy:personal": "STAGE=personal bash scripts/personal-env.sh npx alchemy destroy --stage personal"
   },
   "dependencies": {
-    "@cloudflare/codemode": "0.3.7",
-    "@cloudflare/shell": "0.3.6",
-    "@cloudflare/think": "0.6.1",
-    "agents": "0.12.4",
-    "ai": "6.0.175",
+    "@cloudflare/codemode": "0.4.1",
+    "@cloudflare/shell": "0.4.0",
+    "@cloudflare/think": "0.10.0",
+    "agents": "0.16.2",
+    "ai": "6.0.209",
     "effect": "4.0.0-beta.73",
-    "workers-ai-provider": "3.1.14",
-    "zod": "4.1.12"
+    "workers-ai-provider": "3.2.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20260521.1",
+    "@cloudflare/workers-types": "4.20260624.1",
     "@types/bun": "latest",
-    "alchemy": "0.93.7",
+    "alchemy": "0.93.12",
     "typescript": "6.0.3"
   }
 }

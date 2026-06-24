@@ -1,33 +1,28 @@
 #!/usr/bin/env bash
-# Isolated deploy -> probe -> destroy for the tool-approval-headless example.
-# Never touches the root think-snippets-* Worker.
 set -euo pipefail
-HERE="$(cd "$(dirname "$0")" && pwd)"
-EXAMPLE_DIR="$(cd "$HERE/.." && pwd)"
+EXAMPLE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 REPO_ROOT="$(cd "$EXAMPLE_DIR/../.." && pwd)"
+PERSONAL_ENV="$REPO_ROOT/scripts/personal-env.sh"
+export STAGE="${STAGE:-local}"
 cd "$EXAMPLE_DIR"
-
-export STAGE="${STAGE:-approval}"
 
 cleanup() {
   code=$?
-  echo "::group::tool-approval cleanup"
-  bash "$REPO_ROOT/scripts/personal-env.sh" \
-    npx alchemy destroy --stage "$STAGE" --cwd "$EXAMPLE_DIR" 2>&1 || true
+  echo "::group::cli-sandbox-ground-truth cleanup"
+  bash "$PERSONAL_ENV" npx alchemy destroy --stage "$STAGE" 2>&1 || true
   echo "::endgroup::"
   exit "$code"
 }
 trap cleanup EXIT INT TERM
 
-echo "::group::typecheck (isolated)"
-bunx tsc --noEmit -p "$EXAMPLE_DIR/tsconfig.json"
+echo "::group::typecheck"
+npx tsc --noEmit -p tsconfig.json
 echo "::endgroup::"
 
-echo "::group::deploy personal Cloudflare (tool-approval-headless only)"
+echo "::group::deploy personal Cloudflare only"
 log="$(mktemp)"
-bash "$REPO_ROOT/scripts/personal-env.sh" \
-  npx alchemy deploy --stage "$STAGE" --cwd "$EXAMPLE_DIR" 2>&1 | tee "$log"
-WORKER_URL="$(grep -oE 'https://[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev' "$log" | tail -1)"
+bash "$PERSONAL_ENV" npx alchemy deploy --stage "$STAGE" 2>&1 | tee "$log"
+WORKER_URL="$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' "$log" | tail -1)"
 : "${WORKER_URL:?failed to capture Workers URL}"
 export WORKER_URL
 echo "deployed=$WORKER_URL"
@@ -47,6 +42,6 @@ echo "::endgroup::"
 sleep 8
 
 echo "::group::live proof"
-bun run "$EXAMPLE_DIR/scripts/probe.ts"
+bash "$PERSONAL_ENV" bun run scripts/probe.ts
 echo "::endgroup::"
-echo "✅ tool-approval-headless E2E passed on personal Cloudflare"
+echo "✅ examples/cli-sandbox-ground-truth E2E passed on personal Cloudflare"

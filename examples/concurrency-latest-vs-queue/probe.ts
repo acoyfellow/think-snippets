@@ -63,16 +63,31 @@ const RUN_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,
 // Tool delay is large enough that all three submits are admitted before the
 // first turn finishes. Conservative: with workers-ai latency + 5s tool sleep,
 // the first turn easily lasts >2s after the third submit is sent.
-const TURN_DELAY_MS = 5000;
+// Each queued turn blocks the next (queue mode is serial), so total wall time
+// is ~3 x (delay + model reasoning latency). Keep the delay small but still a
+// real overlap window; the WS timeout below carries the rest.
+const TURN_DELAY_MS = 1500;
 const INTER_SEND_GAP_MS = 200;
 
 const LABELS = ['A', 'B', 'C'] as const;
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${base}${path}`, init);
-  const text = await response.text();
-  if (!response.ok) throw new Error(`${path} HTTP ${response.status}: ${text}`);
-  return JSON.parse(text) as T;
+  const attempts = 8; // /clear and /history are idempotent; retry the fresh-route flap on all methods
+  let last = '';
+  let lastStatus = 0;
+  for (let i = 0; i < attempts; i++) {
+    const response = await fetch(`${base}${path}`, init);
+    lastStatus = response.status;
+    last = await response.text();
+    if (response.ok) return JSON.parse(last) as T;
+    const transient =
+      (response.status === 404 && last.includes('There is nothing here yet')) ||
+      (response.status === 500 && last.includes('Worker threw exception')) ||
+      (!response.ok && /error code: 10\d\d/.test(last));
+    if (!transient) break;
+    await Bun.sleep(1500);
+  }
+  throw new Error(`${path} HTTP ${lastStatus}: ${last}`);
 }
 
 const health = await http<{ ok: boolean; deployAccountMatchesExpected: boolean }>('/health');
@@ -134,7 +149,9 @@ async function driveTurn(variant: 'queue' | 'latest', sessionId: string): Promis
   const allDone = new Promise<void>((resolve, reject) => {
     const timer = setTimeout(
       () => reject(new Error(`timed out waiting for terminal frames; got ${[...receipts.values()].filter((r) => r.done).length}/${LABELS.length}`)),
-      120000,
+      // 3 serial queue turns x (5s injected delay + cold model latency) can
+      // exceed 2min on a cold isolate; give it headroom.
+      180000,
     );
     ws.addEventListener('message', (event: MessageEvent) => {
       let parsed: unknown;

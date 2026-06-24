@@ -46,7 +46,11 @@ async function body<T>(path: string, init?: RequestInit): Promise<T> {
     lastStatus = response.status;
     last = await response.text();
     if (response.ok) return JSON.parse(last) as T;
-    if (response.status !== 404 || !last.includes('There is nothing here yet')) break;
+    const transient =
+      (response.status === 404 && last.includes('There is nothing here yet')) ||
+      (response.status === 500 && last.includes('Worker threw exception')) ||
+      (!response.ok && /error code: 10\d\d/.test(last));
+    if (!transient) break;
     await Bun.sleep(1500);
   }
   throw new Error(`${path} HTTP ${lastStatus}: ${last}`);

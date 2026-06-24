@@ -23,6 +23,9 @@ interface UIMessageChunk {
 }
 
 interface StreamCallback {
+  // think >=0.10 requires onStart(event) at the head of the stream contract
+  // (onStart -> onEvent* -> onDone|onError). onInterrupted is optional.
+  onStart: (event: unknown) => void;
   onEvent: (json: string) => void;
   onDone?: () => void;
   onError?: (message: string) => void;
@@ -72,6 +75,9 @@ async function chatTurn(request: Request, env: Env, sessionId: string) {
   let streamError: string | undefined;
 
   await stub.chat(message, {
+    onStart() {
+      // Stream opened; nothing to do for this headless bridge.
+    },
     onEvent(raw) {
       try {
         const chunk = JSON.parse(raw) as UIMessageChunk;

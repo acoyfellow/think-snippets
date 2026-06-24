@@ -43,6 +43,11 @@ for i in $(seq 1 45); do
 done
 echo "::endgroup::"
 
+# Settle: /health going live does not mean DO-backed routes have fully
+# propagated on a brand-new workers.dev hostname. Brief settle avoids the
+# cold-route 404/1101 flap on the probe's first non-health request.
+sleep 8
+
 echo "::group::live proof (two AgentClient sockets → one Think DO)"
 bun run "$PROBE"
 echo "::endgroup::"

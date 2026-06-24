@@ -40,6 +40,8 @@ interface UIMessageChunk {
 }
 
 interface StreamCallback {
+  // think >=0.10 requires onStart(event) (onStart -> onEvent* -> onDone|onError).
+  onStart: (event: unknown) => void | Promise<void>;
   onEvent: (json: string) => void | Promise<void>;
   onDone?: () => void | Promise<void>;
   onError?: (message: string) => void | Promise<void>;
@@ -106,6 +108,9 @@ export class Parent extends Agent<Env> {
     // RpcTarget-style callback object. The child Worker reaches back into
     // this object across the RPC boundary to emit streamed events.
     const callback: StreamCallback = {
+      onStart: () => {
+        // Stream opened across the RPC boundary; nothing to record here.
+      },
       onEvent: (raw) => {
         chunkCount += 1;
         try {

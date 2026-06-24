@@ -25,10 +25,22 @@ interface AuditRow {
 }
 
 async function body<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${base}${path}`, init);
-  const text = await response.text();
-  if (!response.ok) throw new Error(`${path} HTTP ${response.status}: ${text}`);
-  return JSON.parse(text) as T;
+  const attempts = 8; // run-unique/idempotent POSTs may retry the fresh-route flap
+  let last = '';
+  let lastStatus = 0;
+  for (let i = 0; i < attempts; i++) {
+    const response = await fetch(`${base}${path}`, init);
+    lastStatus = response.status;
+    last = await response.text();
+    if (response.ok) return JSON.parse(last) as T;
+    const transient =
+      (response.status === 404 && last.includes('There is nothing here yet')) ||
+      (response.status === 500 && last.includes('Worker threw exception')) ||
+      (!response.ok && /error code: 10\d\d/.test(last));
+    if (!transient) break;
+    await Bun.sleep(1500);
+  }
+  throw new Error(`${path} HTTP ${lastStatus}: ${last}`);
 }
 
 const health = await body<{ ok: boolean; deployAccountMatchesExpected: boolean }>('/health');

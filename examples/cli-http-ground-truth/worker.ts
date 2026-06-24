@@ -5,16 +5,15 @@ import { tool } from 'ai';
 import { createWorkersAI } from 'workers-ai-provider';
 import { z } from 'zod';
 
-// Isolated example: "my CLI is the ground truth."
+// Isolated example: "my CLI is the ground truth" — HTTP/RPC flavor.
 //
-// Frank's ask (paraphrased): run an agent on Cloudflare that treats a custom
-// CLI as its source of truth for doing tasks. This is the HTTP/RPC flavor:
-// the "CLI" is a tiny command service the Worker hosts (`/cli`). The Think
-// agent has ONE tool — `run_cli` — that shells out to that service over HTTP
-// and must report the service's stdout verbatim. The probe seeds a command
-// whose stdout carries a runtime-only token the model cannot have invented,
-// then proves the token reached the assistant answer AND that the tool call
-// was durably audited.
+// Run a Think agent on Cloudflare that treats a custom CLI as its source of
+// truth for doing tasks. Here the "CLI" is a tiny command service the Worker
+// hosts (`/cli`). The agent has ONE tool — `run_cli` — that shells out to that
+// service over HTTP and must report its stdout verbatim. The probe seeds a
+// command whose stdout carries a runtime-only token the model cannot have
+// invented, then proves the token reached the assistant answer AND that the
+// tool call was durably audited.
 
 export interface Env {
   AI: Ai;

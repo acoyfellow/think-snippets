@@ -1,8 +1,7 @@
 # cli-sandbox-ground-truth
 
 A Cloudflare Project Think agent that runs the user's **CLI inside a sandbox**
-and treats its stdout as ground truth — the hermes/openclaw-style "my CLI is the
-source of truth for doing tasks" framing. Companion to
+and treats its stdout as the source of truth for doing tasks. Companion to
 [`cli-http-ground-truth`](../cli-http-ground-truth) (the HTTP/RPC flavor).
 
 ## What it proves

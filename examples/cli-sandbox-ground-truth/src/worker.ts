@@ -1,9 +1,9 @@
 // Isolated example: "my CLI is the ground truth" — sandbox flavor.
 //
-// Frank's ask, the hermes/openclaw-style framing: an agent on Cloudflare that
-// runs the user's CLI and treats its stdout as the ground truth for a task.
-// Here the "CLI" is a small JS program executed inside the codemode sandbox
-// (a DynamicWorkerExecutor isolate) via @cloudflare/think's execute tool.
+// Run a Think agent on Cloudflare that executes the user's CLI and treats its
+// stdout as the ground truth for a task. Here the "CLI" is a small JS program
+// executed inside the codemode sandbox (a DynamicWorkerExecutor isolate) via
+// @cloudflare/think's execute tool.
 //
 // The proof: the sandbox CLI computes a deterministic, runtime-only result
 // (a token derived from per-run input). The probe asserts the value the agent

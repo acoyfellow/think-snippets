@@ -23,6 +23,10 @@ const worker = await Worker('cli-sbx', {
     CliSandbox: DurableObjectNamespace('CliSandbox', { className: 'CliSandbox', sqlite: true }),
     // Required runtime binding for the codemode DynamicWorkerExecutor sandbox.
     LOADER: WorkerLoader(),
+    // Real Cloudflare credentials for the cf CLI tool (same personal token the
+    // deploy already runs with; stays server-side, never enters the sandbox).
+    CF_API_TOKEN: process.env.CLOUDFLARE_API_TOKEN ?? '',
+    CF_ACCOUNT_ID: deployAccountId,
     EXPECTED_ACCOUNT_ID: expectedPersonalAccountId,
     DEPLOY_ACCOUNT_ID: deployAccountId,
   },

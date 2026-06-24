@@ -21,6 +21,12 @@ const worker = await Worker('cli-http', {
   bindings: {
     AI: Ai(),
     CliAgent: DurableObjectNamespace('CliAgent', { className: 'CliAgent', sqlite: true }),
+    // Real Cloudflare credentials so the `cf` CLI hits the live account. This
+    // is the same personal token the deploy already runs with; it is bound as
+    // a plain var to keep the example free of extra secret-store ceremony.
+    // (A production agent would use alchemy.secret() + an app password.)
+    CF_API_TOKEN: process.env.CLOUDFLARE_API_TOKEN ?? '',
+    CF_ACCOUNT_ID: deployAccountId,
     EXPECTED_ACCOUNT_ID: expectedPersonalAccountId,
     DEPLOY_ACCOUNT_ID: deployAccountId,
   },

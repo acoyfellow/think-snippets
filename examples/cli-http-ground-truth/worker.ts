@@ -1,24 +1,26 @@
 import { Think } from '@cloudflare/think';
-import type { ToolCallResultContext } from '@cloudflare/think';
 import { getAgentByName } from 'agents';
 import { tool } from 'ai';
 import { createWorkersAI } from 'workers-ai-provider';
 import { z } from 'zod';
 
-// Isolated example: "my CLI is the ground truth" — HTTP/RPC flavor.
+// Isolated example: a Think agent whose source of truth is a real Cloudflare
+// CLI ("cf"), exposed over HTTP.
 //
-// Run a Think agent on Cloudflare that treats a custom CLI as its source of
-// truth for doing tasks. Here the "CLI" is a tiny command service the Worker
-// hosts (`/cli`). The agent has ONE tool — `run_cli` — that shells out to that
-// service over HTTP and must report its stdout verbatim. The probe seeds a
-// command whose stdout carries a runtime-only token the model cannot have
-// invented, then proves the token reached the assistant answer AND that the
-// tool call was durably audited.
+// The CLI is NOT a fixture. `cf <command>` runs the actual Cloudflare API
+// against the deploying account using the bound token, so its stdout is live
+// account state that neither the model nor this repo authored. The agent has
+// one tool, `run_cf`, which shells out to the CLI service and must report its
+// stdout verbatim. The probe independently calls the same Cloudflare API and
+// asserts the agent's answer matches reality — a wrong/hallucinated answer
+// genuinely fails because the truth is the account, not a planted string.
 
 export interface Env {
   AI: Ai;
   CliAgent: DurableObjectNamespace<CliAgent>;
-  // The CLI service shares this Worker; the agent calls it over its own URL.
+  // Real Cloudflare credentials, scoped to the deploying (personal) account.
+  CF_API_TOKEN: string;
+  CF_ACCOUNT_ID: string;
   SELF_ORIGIN?: string;
   EXPECTED_ACCOUNT_ID?: string;
   DEPLOY_ACCOUNT_ID?: string;
@@ -37,7 +39,7 @@ interface StreamCallback {
   onError?: (message: string) => void;
 }
 
-interface CliResult {
+interface CfResult {
   exitCode: number;
   stdout: string;
   stderr: string;
@@ -51,49 +53,68 @@ interface AuditRow {
   stdout: string;
 }
 
-const runCliInput = z.object({
-  command: z.string().min(1).max(200).describe('The CLI command line to execute, e.g. "status".'),
-});
+const CF_API = 'https://api.cloudflare.com/client/v4';
 
-// ---------------------------------------------------------------------------
-// The "CLI service". In a real deployment this is the user's own CLI exposed
-// over HTTP/RPC; here it is a deterministic in-Worker command registry so the
-// example is self-contained and the probe can seed a runtime-only token.
-// ---------------------------------------------------------------------------
-const cliRegistry = new Map<string, (token: string) => CliResult>([
-  [
-    'status',
-    (token) => ({
-      exitCode: 0,
-      stdout: `service: ok\nbuild: ${token}\nuptime: 42s`,
-      stderr: '',
-    }),
-  ],
-  [
-    'version',
-    (token) => ({ exitCode: 0, stdout: `mycli 1.0.0+${token}`, stderr: '' }),
-  ],
-]);
+// The real `cf` CLI. Each subcommand maps to a genuine Cloudflare API call.
+// Output is whatever the live account returns — not a fixture.
+async function runCf(command: string, env: Env): Promise<CfResult> {
+  const [name, ...rest] = command.trim().split(/\s+/);
+  const headers = { authorization: `Bearer ${env.CF_API_TOKEN}` };
 
-function runCliCommand(command: string, token: string): CliResult {
-  const name = command.trim().split(/\s+/)[0] ?? '';
-  const handler = cliRegistry.get(name);
-  if (!handler) {
-    return { exitCode: 127, stdout: '', stderr: `mycli: command not found: ${name}` };
+  async function api(path: string) {
+    const res = await fetch(`${CF_API}${path}`, { headers });
+    const json = (await res.json()) as { success?: boolean; result?: unknown; errors?: unknown };
+    return { ok: res.ok && json.success !== false, json };
   }
-  return handler(token);
+
+  try {
+    switch (name) {
+      case 'whoami': {
+        const { ok, json } = await api('/user/tokens/verify');
+        const r = (json.result ?? {}) as { status?: string };
+        return ok
+          ? { exitCode: 0, stdout: `token: ${r.status ?? 'unknown'}\naccount: ${env.CF_ACCOUNT_ID}`, stderr: '' }
+          : { exitCode: 1, stdout: '', stderr: `cf: whoami failed: ${JSON.stringify(json.errors)}` };
+      }
+      case 'account': {
+        const { ok, json } = await api(`/accounts/${env.CF_ACCOUNT_ID}`);
+        const r = (json.result ?? {}) as { name?: string; id?: string };
+        return ok
+          ? { exitCode: 0, stdout: `name: ${r.name ?? ''}\nid: ${r.id ?? ''}`, stderr: '' }
+          : { exitCode: 1, stdout: '', stderr: `cf: account failed: ${JSON.stringify(json.errors)}` };
+      }
+      case 'workers': {
+        if (rest[0] !== 'list') {
+          return { exitCode: 2, stdout: '', stderr: `cf: unknown workers subcommand: ${rest[0] ?? ''}` };
+        }
+        const { ok, json } = await api(`/accounts/${env.CF_ACCOUNT_ID}/workers/scripts`);
+        const scripts = (json.result ?? []) as Array<{ id?: string }>;
+        return ok
+          ? { exitCode: 0, stdout: `count: ${scripts.length}`, stderr: '' }
+          : { exitCode: 1, stdout: '', stderr: `cf: workers list failed: ${JSON.stringify(json.errors)}` };
+      }
+      default:
+        return { exitCode: 127, stdout: '', stderr: `cf: command not found: ${name}` };
+    }
+  } catch (err) {
+    return { exitCode: 1, stdout: '', stderr: `cf: ${err instanceof Error ? err.message : String(err)}` };
+  }
 }
+
+const runCfInput = z.object({
+  command: z
+    .string()
+    .min(1)
+    .max(120)
+    .describe('A cf CLI command line, e.g. "account", "whoami", or "workers list".'),
+});
 
 export class CliAgent extends Think<Env> {
   private _auditReady = false;
 
-  // The agent must know its own Worker origin to reach the /cli service.
-  // env mutations in the top-level fetch handler do NOT propagate into the
-  // DO's env snapshot, so the origin is set explicitly over RPC and persisted.
   async setOrigin(origin: string): Promise<void> {
     await this.ctx.storage.put('cliOrigin', origin);
   }
-
   private async cliOrigin(): Promise<string> {
     return (await this.ctx.storage.get<string>('cliOrigin')) ?? this.env.SELF_ORIGIN ?? '';
   }
@@ -104,46 +125,41 @@ export class CliAgent extends Think<Env> {
 
   getSystemPrompt() {
     return [
-      'You are an operations agent whose ONLY source of truth is the `run_cli` tool.',
-      'You must never guess command output. To answer any question about the',
-      'system, call `run_cli` with the appropriate command and report its stdout',
-      'exactly. Treat the CLI stdout as authoritative ground truth.',
+      'You are a Cloudflare operations agent whose ONLY source of truth is the',
+      '`run_cf` tool, which runs a real `cf` CLI against the live account.',
+      'Never guess account state. To answer any question, call `run_cf` with the',
+      'right command and report its stdout exactly. The CLI output is ground truth.',
     ].join(' ');
   }
 
   private ensureAudit() {
     if (this._auditReady) return;
     this.ctx.storage.sql.exec(
-      `CREATE TABLE IF NOT EXISTS cli_audit (
+      `CREATE TABLE IF NOT EXISTS cf_audit (
          id INTEGER PRIMARY KEY AUTOINCREMENT,
-         ts INTEGER NOT NULL,
-         command TEXT NOT NULL,
-         exit_code INTEGER NOT NULL,
-         stdout TEXT NOT NULL
-       )`,
+         ts INTEGER NOT NULL, command TEXT NOT NULL,
+         exit_code INTEGER NOT NULL, stdout TEXT NOT NULL )`,
     );
     this._auditReady = true;
   }
 
   override getTools() {
     return {
-      run_cli: tool({
+      run_cf: tool({
         description:
-          'Run a command against the operator CLI service and return its stdout, stderr, and exit code. This is the only source of truth.',
-        inputSchema: runCliInput,
+          'Run a command against the real Cloudflare `cf` CLI and return its stdout/stderr/exit code. This is the only source of truth about the account.',
+        inputSchema: runCfInput,
         execute: async ({ command }) => {
-          // Shell out to the CLI service over HTTP — exactly how a real agent
-          // would invoke an external CLI exposed as a service.
           const origin = await this.cliOrigin();
-          const res = await fetch(`${origin}/cli`, {
+          const res = await fetch(`${origin}/cf`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ command }),
           });
-          const result = (await res.json()) as CliResult;
+          const result = (await res.json()) as CfResult;
           this.ensureAudit();
           this.ctx.storage.sql.exec(
-            'INSERT INTO cli_audit (ts, command, exit_code, stdout) VALUES (?, ?, ?, ?)',
+            'INSERT INTO cf_audit (ts, command, exit_code, stdout) VALUES (?, ?, ?, ?)',
             Date.now(),
             command,
             result.exitCode,
@@ -155,15 +171,10 @@ export class CliAgent extends Think<Env> {
     };
   }
 
-  override afterToolCall(_ctx: ToolCallResultContext): void {
-    // Audit is written inside execute() so it captures the real CLI output.
-  }
-
-  // RPC: list audit rows so the probe can prove the tool actually ran.
   async listAudit(): Promise<AuditRow[]> {
     this.ensureAudit();
     const rows = this.ctx.storage.sql
-      .exec('SELECT id, ts, command, exit_code, stdout FROM cli_audit ORDER BY id ASC')
+      .exec('SELECT id, ts, command, exit_code, stdout FROM cf_audit ORDER BY id ASC')
       .toArray() as unknown as Array<{
       id: number;
       ts: number;
@@ -194,12 +205,12 @@ async function agentStub(env: Env, sessionId: string) {
 
 async function chat(request: Request, env: Env, sessionId: string, origin: string) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-  const message = typeof body.message === 'string' ? body.message : 'What is the build id? Use the CLI.';
+  const message =
+    typeof body.message === 'string' ? body.message : 'What is this account name? Use the cf CLI.';
   const stub = (await agentStub(env, sessionId)) as unknown as {
     chat: (m: string, cb: StreamCallback) => Promise<void>;
     setOrigin: (o: string) => Promise<void>;
   };
-  // Tell the agent its own origin so the run_cli tool can reach /cli.
   await stub.setOrigin(origin);
   let answer = '';
   let error: string | undefined;
@@ -241,19 +252,10 @@ export default {
       });
     }
 
-    // The CLI service endpoint. The agent's run_cli tool calls this.
-    // The token is deterministic per deploy (derived from the account id) so
-    // every isolate agrees, while still being a value the model cannot have
-    // memorized from training — proving it used the CLI, not a guess.
-    if (url.pathname === '/cli' && request.method === 'POST') {
+    // The real cf CLI service. The agent's run_cf tool calls this.
+    if (url.pathname === '/cf' && request.method === 'POST') {
       const body = (await request.json().catch(() => ({}))) as { command?: string };
-      return json(runCliCommand(body.command ?? '', cliToken(env)));
-    }
-
-    // Probe helper: reveal the deploy CLI token so the probe knows the exact
-    // ground-truth string to look for in the agent's answer.
-    if (url.pathname === '/cli-token') {
-      return json({ token: cliToken(env) });
+      return json(await runCf(body.command ?? '', env));
     }
 
     const parts = url.pathname.split('/').filter(Boolean).map(decodeURIComponent);
@@ -264,18 +266,3 @@ export default {
     return json({ ok: false, error: 'Not found' }, { status: 404 });
   },
 } satisfies ExportedHandler<Env>;
-
-// Deploy-stable token: deterministic across all isolates of this deploy so
-// the /cli-token reveal and the agent's run_cli output always agree, yet
-// unguessable (derived from the per-account deploy id) so an answer that
-// contains it proves the model actually called the CLI.
-function cliToken(env: Env): string {
-  const seed = env.DEPLOY_ACCOUNT_ID ?? 'local';
-  // Tiny stable hash -> 8 hex chars.
-  let h = 2166136261;
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0).toString(16).padStart(8, '0');
-}

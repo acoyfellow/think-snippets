@@ -1,21 +1,18 @@
-// Isolated example: "my CLI is the ground truth" — sandbox flavor.
+// Isolated example: a real `cf` CLI as the agent's ground truth — sandbox flavor.
 //
-// Run a Think agent on Cloudflare that executes the user's CLI and treats its
-// stdout as the ground truth for a task. Here the "CLI" is a small JS program
-// executed inside the codemode sandbox (a DynamicWorkerExecutor isolate) via
-// @cloudflare/think's execute tool.
-//
-// The proof: the sandbox CLI computes a deterministic, runtime-only result
-// (a token derived from per-run input). The probe asserts the value the agent
-// reports as the task result EQUALS the sandbox CLI's stdout — and that a
-// deliberately wrong guess would not match. The model never sees the token; it
-// only sees it by running the CLI.
+// The agent runs code inside the codemode sandbox (a DynamicWorkerExecutor
+// isolate). Inside that sandbox it can call `tools.cf({ command })`, a real
+// Cloudflare CLI that hits the live account API. The sandbox composes the call;
+// the bound token stays server-side (it never enters the sandbox). The ground
+// truth is the actual account, so a hallucinated answer fails against reality.
 
 import { Think } from '@cloudflare/think';
 import { createExecuteTool } from '@cloudflare/think/tools/execute';
 import { getAgentByName } from 'agents';
+import { tool } from 'ai';
 import { createWorkersAI } from 'workers-ai-provider';
 import type { Tool } from 'ai';
+import { z } from 'zod';
 
 // codemode >=0.4 runs sandboxed code in a CodemodeRuntime facet that must be
 // exported from the worker entry.
@@ -25,6 +22,8 @@ export interface Env {
   AI: Ai;
   CliSandbox: DurableObjectNamespace<CliSandbox>;
   LOADER: WorkerLoader;
+  CF_API_TOKEN: string;
+  CF_ACCOUNT_ID: string;
   EXPECTED_ACCOUNT_ID?: string;
   DEPLOY_ACCOUNT_ID?: string;
 }
@@ -35,47 +34,75 @@ interface ExecuteToolOutput {
   error?: string;
 }
 
-// The user's "CLI", shipped to the sandbox as source. It reads its argument
-// and emits a deterministic stdout line. In a real setup this is the user's
-// compiled CLI / script; the contract is identical: stdout is ground truth.
-function cliProgramSource(arg: string): string {
-  return `
-    // ---- user CLI (runs inside the sandbox isolate) ----
-    function mycli(input) {
-      // Deterministic transform the model cannot precompute without running it.
-      let h = 5381;
-      for (let i = 0; i < input.length; i++) h = ((h << 5) + h + input.charCodeAt(i)) >>> 0;
-      return 'RESULT ' + input + ' => ' + h.toString(16);
+const CF_API = 'https://api.cloudflare.com/client/v4';
+
+// The real `cf` CLI, exposed to the sandbox as a tool. Runs server-side
+// against the live Cloudflare account; output is genuine account state.
+async function runCf(command: string, env: Env): Promise<string> {
+  const [name, ...rest] = command.trim().split(/\s+/);
+  const headers = { authorization: `Bearer ${env.CF_API_TOKEN}` };
+  const get = async (path: string) => {
+    const res = await fetch(`${CF_API}${path}`, { headers });
+    return (await res.json()) as { success?: boolean; result?: unknown; errors?: unknown };
+  };
+  switch (name) {
+    case 'account': {
+      const j = await get(`/accounts/${env.CF_ACCOUNT_ID}`);
+      const r = (j.result ?? {}) as { name?: string; id?: string };
+      if (j.success === false) return `cf: account failed: ${JSON.stringify(j.errors)}`;
+      return `name: ${r.name ?? ''}\nid: ${r.id ?? ''}`;
     }
-    return { stdout: mycli(${JSON.stringify(arg)}) };
-  `;
+    case 'workers': {
+      if (rest[0] !== 'list') return `cf: unknown workers subcommand: ${rest[0] ?? ''}`;
+      const j = await get(`/accounts/${env.CF_ACCOUNT_ID}/workers/scripts`);
+      const scripts = (j.result ?? []) as unknown[];
+      if (j.success === false) return `cf: workers list failed: ${JSON.stringify(j.errors)}`;
+      return `count: ${scripts.length}`;
+    }
+    default:
+      return `cf: command not found: ${name}`;
+  }
 }
 
 export class CliSandbox extends Think<Env> {
   getModel() {
     return createWorkersAI({ binding: this.env.AI })('@cf/moonshotai/kimi-k2.6');
   }
-
   getSystemPrompt() {
-    return 'Sandbox CLI ground-truth example assistant.';
+    return 'Sandbox cf-CLI ground-truth example assistant.';
   }
 
   private executeTool(): Tool {
-    return createExecuteTool(this, {}) as Tool;
+    // Expose the real cf CLI as a sandbox tool: inside generated code, call
+    // `tools.cf({ command })`. The secret token stays out of the sandbox.
+    const env = this.env;
+    return createExecuteTool(this, {
+      tools: {
+        cf: tool({
+          description: 'Run a real Cloudflare cf CLI command; returns live account stdout.',
+          inputSchema: z.object({ command: z.string().min(1).max(120) }),
+          execute: async ({ command }) => ({ stdout: await runCf(command, env) }),
+        }),
+      },
+    }) as Tool;
   }
 
-  // Run the user's CLI inside the sandbox and return its stdout. This is the
-  // ground-truth path: the deterministic transform only resolves by executing.
-  async runCli(arg: string): Promise<{ stdout: string }> {
-    const tool = this.executeTool();
-    if (typeof tool.execute !== 'function') throw new Error('execute tool missing execute()');
-    const out = (await tool.execute(
-      { code: cliProgramSource(arg) },
-      { toolCallId: `cli-${crypto.randomUUID()}`, messages: [] },
+  // Drive a sandbox program that calls the real cf CLI and returns its stdout.
+  async sandboxCf(command: string): Promise<{ stdout: string }> {
+    const t = this.executeTool();
+    if (typeof t.execute !== 'function') throw new Error('execute tool missing execute()');
+    const code = `
+      // ---- runs inside the codemode sandbox isolate ----
+      const out = await tools.cf({ command: ${JSON.stringify(command)} });
+      return { stdout: out.stdout };
+    `;
+    const out = (await t.execute(
+      { code },
+      { toolCallId: `cf-${crypto.randomUUID()}`, messages: [] },
     )) as ExecuteToolOutput;
     const result = out?.result as { stdout?: string } | undefined;
     if (!result || typeof result.stdout !== 'string') {
-      throw new Error(`sandbox CLI did not return stdout: ${JSON.stringify(out)}`);
+      throw new Error(`sandbox did not return cf stdout: ${JSON.stringify(out)}`);
     }
     return { stdout: result.stdout };
   }
@@ -107,12 +134,12 @@ export default {
 
     const parts = url.pathname.split('/').filter(Boolean).map(decodeURIComponent);
     const [kind, sessionId] = parts;
-    if (request.method === 'POST' && kind === 'cli' && sessionId) {
-      const body = (await request.json().catch(() => ({}))) as { arg?: string };
+    if (request.method === 'POST' && kind === 'cf' && sessionId) {
+      const body = (await request.json().catch(() => ({}))) as { command?: string };
       const stub = (await stubFor(env, sessionId)) as unknown as {
-        runCli: (arg: string) => Promise<{ stdout: string }>;
+        sandboxCf: (command: string) => Promise<{ stdout: string }>;
       };
-      const result = await stub.runCli(String(body.arg ?? 'task'));
+      const result = await stub.sandboxCf(String(body.command ?? 'account'));
       return json({ ok: true, sessionId, ...result });
     }
     return json({ ok: false, error: 'Not found' }, { status: 404 });

@@ -1,17 +1,23 @@
 // Live proof for cli-http-ground-truth.
 //
-// 1. /health attests the personal-account deploy.
-// 2. Read the runtime-only CLI token from /cli-token (the ground truth the
-//    model cannot have invented).
-// 3. Ask the agent a question that can only be answered by running the CLI.
-// 4. Assert the agent's answer contains the runtime token (it used the CLI),
-//    and that a durable audit row records the run_cli tool call.
+// The ground truth is the REAL Cloudflare account, not a planted string.
+//   1. The probe independently calls the Cloudflare API to learn the true
+//      account name (using the same personal token, directly — not via the
+//      agent).
+//   2. It asks the agent for the account name; the agent must run the `cf`
+//      CLI to answer.
+//   3. It asserts the agent's answer contains the true account name AND that a
+//      durable audit row shows the run_cf call returned that same name.
+// A hallucinated answer fails because it is checked against live reality.
 export {};
 
 const base = process.env.WORKER_URL;
 if (!base) throw new Error('WORKER_URL is required');
-const expected = process.env.CLOUDFLARE_PERSONAL_ACCOUNT_ID;
-if (!expected) throw new Error('CLOUDFLARE_PERSONAL_ACCOUNT_ID is required');
+const accountId = process.env.CLOUDFLARE_PERSONAL_ACCOUNT_ID;
+const apiToken = process.env.CLOUDFLARE_PERSONAL_API_TOKEN;
+if (!accountId || !apiToken) {
+  throw new Error('CLOUDFLARE_PERSONAL_ACCOUNT_ID and CLOUDFLARE_PERSONAL_API_TOKEN are required');
+}
 
 async function body<T>(path: string, init?: RequestInit): Promise<T> {
   const attempts = 8;
@@ -38,36 +44,41 @@ if (!health.ok || !health.deployAccountMatchesExpected || health.example !== 'cl
 }
 console.log('✓ /health attests personal-account deploy');
 
-const { token } = await body<{ token: string }>('/cli-token');
-if (!token) throw new Error('no runtime CLI token returned');
-console.log(`✓ runtime-only CLI ground-truth token = ${token}`);
+// Independent ground truth: ask the Cloudflare API directly.
+const cfRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}`, {
+  headers: { authorization: `Bearer ${apiToken}` },
+});
+const cfJson = (await cfRes.json()) as { success?: boolean; result?: { name?: string } };
+const trueName = cfJson.result?.name;
+if (!cfJson.success || !trueName) {
+  throw new Error(`could not read true account name from Cloudflare API: ${JSON.stringify(cfJson)}`);
+}
+console.log(`✓ independent Cloudflare API truth: account name = ${JSON.stringify(trueName)}`);
 
-const session = `cli-${Date.now()}`;
+const session = `cf-${Date.now()}`;
 const chat = await body<{ answer: string }>(`/chat/${session}`, {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
   body: JSON.stringify({
-    message: 'Run the CLI command `status` and tell me the exact build id it reports.',
+    message: 'Run the cf CLI to find this Cloudflare account name, then tell me the exact name it reports.',
   }),
 });
-console.log(`  agent answer: ${chat.answer.slice(0, 160)}`);
+console.log(`  agent answer: ${chat.answer.slice(0, 200)}`);
 
-if (!chat.answer.includes(token)) {
+if (!chat.answer.includes(trueName)) {
   throw new Error(
-    `agent answer did not contain the CLI ground-truth token ${token} — it may have hallucinated instead of using the CLI: ${chat.answer}`,
+    `agent answer did not contain the real account name ${JSON.stringify(trueName)} — it hallucinated instead of using the cf CLI: ${chat.answer}`,
   );
 }
-console.log('✓ agent answer carries the CLI stdout token (used the CLI as ground truth, not a guess)');
+console.log('✓ agent answer matches live Cloudflare account name (used the cf CLI, not a guess)');
 
-const { audit } = await body<{ audit: Array<{ command: string; exitCode: number; stdout: string }> }>(
-  `/audit/${session}`,
-);
-const statusRuns = audit.filter((r) => r.command.trim().startsWith('status'));
-if (statusRuns.length < 1) {
-  throw new Error(`expected a durable run_cli audit row for "status"; got ${JSON.stringify(audit)}`);
+const { audit } = await body<{ audit: Array<{ command: string; stdout: string }> }>(`/audit/${session}`);
+const accountRuns = audit.filter((r) => r.command.trim().startsWith('account'));
+if (accountRuns.length < 1) {
+  throw new Error(`expected a durable run_cf audit row for "account"; got ${JSON.stringify(audit)}`);
 }
-if (!statusRuns.some((r) => r.stdout.includes(token))) {
-  throw new Error(`audit row stdout did not carry the runtime token ${token}: ${JSON.stringify(statusRuns)}`);
+if (!accountRuns.some((r) => r.stdout.includes(trueName))) {
+  throw new Error(`audit row stdout did not carry the real account name: ${JSON.stringify(accountRuns)}`);
 }
-console.log(`✓ durable audit recorded ${statusRuns.length} run_cli call(s); stdout carried the ground-truth token`);
-console.log('✅ cli-http-ground-truth E2E passed: CLI stdout was the agent ground truth');
+console.log(`✓ durable audit recorded ${accountRuns.length} run_cf "account" call(s); stdout carried live truth`);
+console.log('✅ cli-http-ground-truth E2E passed: a real cf CLI was the agent ground truth');
